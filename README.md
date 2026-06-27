@@ -6,6 +6,65 @@ The PaloNexus documentation site — built with [Astro](https://astro.build) +
 Covers developer integration, the Python SDK reference, operations (Go + Terraform),
 self-hosting, architecture/features, and an HTTP API reference.
 
+## How PaloNexus fits together
+
+An agent author builds and governs an agent through the **`palonexus` Python SDK** — its
+`crypto` layer mints the agent's `did:web` identity and verifiable presentations, its `idp`
+layer talks to **agent-idp** for provisioning and delegations, and `pn.task(...)` gates wrap
+every action. At runtime the governed agent's calls flow through the Envoy gateway
+(north-south) or the egress proxy (the agent's outbound calls) into the Go **control plane**,
+which renders one `/authz` decision — verify identity, resolve caller and target, evaluate
+policy with an OPA veto, and append a hash-chained audit record — before anything reaches an
+upstream model, tool, service, or peer.
+
+```mermaid
+flowchart LR
+  dev(["Agent author"])
+
+  subgraph sdk["palonexus Python SDK — pip install palonexus"]
+    facade["PaloNexus facade<br/>pn.task() · task.check() gates"]
+    crypto["palonexus.crypto<br/>agentdid: keys · did:web · VC/VP"]
+    idpc["palonexus.idp<br/>agent-idp HTTP client"]
+    fw["framework adapters<br/>langchain · langgraph · deepagents"]
+  end
+
+  agent(["Governed agent pod"])
+  gw["Envoy Gateway<br/>ext_authz"]
+  proxy["Egress proxy :9092"]
+
+  subgraph cp["Control plane — one Go binary"]
+    dec{{":9191 /authz decision"}}
+    id["identity: verify JWT / VP"]
+    reg["registry: resolve caller + target"]
+    pol["policy: inline rules + OPA veto"]
+    aud["audit: hash-chained record"]
+  end
+
+  aidp[("agent-idp<br/>did:web issuer · VCs")]
+  idp[("Enterprise IdP<br/>OIDC · SCIM · Logto in demo")]
+  upstream(["Upstream: model · tool · service · peer"])
+
+  dev -->|build and govern| fw
+  fw --> facade
+  facade --> crypto
+  facade --> idpc
+  idpc -->|provision · delegations| aidp
+  facade ==>|deploys| agent
+
+  agent -->|HTTP_PROXY| proxy --> dec
+  gw -->|ext_authz| dec
+  agent -.->|north-south| gw
+  dec --> id --> reg --> pol --> aud
+  id -.JWKS.-> idp
+  pol -.verify VP.-> aidp
+  pol ==>|allow| upstream
+```
+
+*The product end to end: the `palonexus` SDK is the developer front door for agent identity,
+delegations, and runtime gates; every governed call still resolves to one control-plane
+`/authz` decision before it reaches an upstream. Deep-dive: [Architecture](/docs/concepts/architecture/)
+and the [SDK reference](/docs/sdk/).*
+
 ## Local development
 
 ```sh
