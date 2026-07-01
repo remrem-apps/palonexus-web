@@ -155,17 +155,21 @@ and meters the budget. It sees only raw HTTP, so it cannot match a fine-grained
 delegation like `runbook:read` on a specific resource.
 
 Fine-grained, human-approved DID/VC enforcement is therefore done **server-side** by
-the protected resource (runbooks-api). The consequence for the registry's `dataClass`:
+the protected resource itself. This applies to **any** resource type — runbooks,
+payments, ticketing, a data API — not a specific one; the example below uses the
+runbooks demo resource, but a `payments-api` enforcing `payments:write` works the same
+way. The consequence for the registry's `dataClass`:
 
 | `dataClass` | Where enforced | Behavior at the proxy |
 |---|---|---|
-| `internal` | server-side DID/VC challenge (e.g. runbooks-api) | allowlist-gated only; the *server* runs the fine-grained delegation/challenge |
+| `internal` | server-side DID/VC challenge (the resource's own server, e.g. `payments-api` or the runbooks demo) | allowlist-gated only; the *server* runs the fine-grained delegation/challenge |
 | `regulated` | the proxy itself (no server-side gate, e.g. `scale_deployment`) | the proxy **holds** for human approval |
 
-So runbooks-api is registered `internal` (its own server does the regulated
-challenge), while a target with no server-side gate stays `regulated` so the proxy
-holds it. See [Persistence & identity](/docs/concepts/persistence-and-identity/) for
-the cryptographic identity that underpins all of this.
+So a resource that runs its own DID/VC challenge is registered `internal` (the
+runbooks demo is one example), while a target with no server-side gate stays
+`regulated` so the proxy holds it. See
+[Persistence & identity](/docs/concepts/persistence-and-identity/) for the
+cryptographic identity that underpins all of this.
 
 ## The autonomous hero flow
 

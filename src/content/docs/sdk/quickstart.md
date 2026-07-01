@@ -10,6 +10,17 @@ Everything the `palonexus` SDK does, in one page, copy-pasteable. Every snippet 
 (**Ethan Park** owner, **Maya Chen** approver, **Claire Evans** the negative persona). For the
 narrated 10-minute version, start with the [agent-dev quickstart](/docs/getting-started/quickstart-agent-dev/).
 
+:::note[The SDK is partner-neutral — this page uses a reference demo]
+PaloNexus core is about **agents, owners, delegations, tasks, resources, and decisions** —
+not any specific IdP or protected resource. This page uses the **runbooks** demo resource
+(`runbooks-api:/runbooks/…`, action `runbooks:read`) and the Northstar/Logto reference seed
+because they're concrete and runnable — but they are **one reference integration, not a
+requirement**. Any resource and scope work the same way: swap in `payments-api` /
+`payments:write`, point at any SCIM IdP (Logto is just the reference), and the calls below are
+unchanged. The demo's service→scope mapping lives in `palonexus.reference`; the generic core
+ships without it.
+:::
+
 :::tip[Run it in the browser first — no install]
 The operator portal ships an in-browser **SDK playground** (`/playground`) that runs the same
 canonical `PaloNexus.offline()` hero flow you'll build below — pick a persona, edit the governed
