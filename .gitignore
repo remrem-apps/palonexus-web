@@ -60,3 +60,6 @@ Thumbs.db
 
 # Staged docs assets for Cloudflare deploy
 dist-deploy/
+
+CLAUDE.md
+AGENTS.md
