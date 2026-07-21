@@ -20,16 +20,16 @@ egress**, with north-south ingress as the foundation underneath it:
 
 - **present** → `serveEgress` (the agent on-ramp — *may this agent make this outbound
   call, on behalf of this human, for this task, right now?*)
-- **absent** → `serveIngress` (north-south, forwarded by Envoy's `ext_authz` filter)
+- **absent** → `serveIngress` (north-south, forwarded by Envoy's external-authorization (`ext_authz`) filter)
 
 Both paths call the same dependency packages in order:
 
 | Package | Concern | On failure |
 |---|---|---|
-| `internal/identity` | verify the bearer JWT (vs OIDC JWKS) | `401` invalid credential |
-| `internal/agentid` | verify the agent Verifiable Presentation (egress only) | `403` identity failure / mismatch |
+| `internal/identity` | verify the bearer JSON Web Token (JWT) against the OpenID Connect (OIDC) JSON Web Key Set (JWKS) | `401` invalid credential |
+| `internal/agentid` | verify the agent Verifiable Presentation (VP) (egress only) | `403` identity failure / mismatch |
 | `internal/registry` | resolve the caller + target service | `403` unknown service / agent / target |
-| `internal/policy` | inline rules, then OPA veto (deny-overrides); egress adds allowlist + budget + delegation | `403` deny (or `401` needs-approval on egress) |
+| `internal/policy` | inline rules, then an Open Policy Agent (OPA) veto (deny-overrides); egress adds allowlist + budget + delegation | `403` deny (or `401` needs-approval on egress) |
 | `internal/audit` | append a hash-chained record of the outcome | — |
 | `internal/metrics` | bump the decision counter + latency histogram | — |
 
@@ -45,7 +45,7 @@ agent pod** through the egress forward-proxy (the headline path), and a north-so
 converge on the `:9191` decision listener, which runs the internal stages in order
 (identity → registry → policy → audit → metrics) and only forwards to the upstream on an
 **allow** (the bold edge). The dashed edges are the two identity sources the decision
-consults but does not embed: **the enterprise IdP (OIDC)** supplies human sign-in keys (JWKS)
+consults but does not embed: **the enterprise identity provider (IdP, OIDC)** supplies human sign-in keys (JWKS)
 and the workforce directory (Logto in the demo), while **agent-idp** verifies each agent's
 Verifiable Presentation.
 The `:8181` management API sits beside the hot path so operators and CI can read the
@@ -152,11 +152,11 @@ The platform deploys into three namespaces, each a trust boundary:
 
 | Namespace | Contents | Role |
 |---|---|---|
-| `palonexus` | control-plane, OPA, Dex, OTel collector, model-broker, portal, egress proxy | the control layer |
+| `palonexus` | control-plane, OPA, Dex, OpenTelemetry (OTel) collector, model-broker, portal, egress proxy | the control layer |
 | `apps` | the authority-bound agents, upstream services, runbooks-api, incy | the workloads being governed |
 | `observability` | Grafana LGTM (Tempo / Prometheus / Loki) | telemetry sink |
 
-`agent-idp` runs in its own `agent-idp` namespace so its `did:web` issuer DID resolves
+`agent-idp` runs in its own `agent-idp` namespace so its `did:web` issuer Decentralized Identifier (DID) resolves
 at a stable in-cluster name (`did:web:agent-idp.agent-idp.svc`).
 
 **NetworkPolicy is part of the design, not an afterthought.** Agent egress is confined
@@ -176,8 +176,8 @@ opens all of them at once.
 | Portal | In-cluster | What it's for |
 |---|---|---|
 | **Control-plane console** | `svc/portal:3000` (ns `palonexus`) | the operator cockpit — the tabs below |
-| **Grafana (LGTM)** | `svc/lgtm:3000` (ns `observability`) | traces with DID/VC attributes (Tempo), decision/latency/token/cost metrics (Prometheus), audit/log search (Loki) |
-| **Incy** *(optional backdrop)* | `svc/web` (ns `incy`) | a realistic SRE incident-management app the agents can act against |
+| **Grafana (LGTM)** | `svc/lgtm:3000` (ns `observability`) | traces with DID / Verifiable Credential (VC) attributes (Tempo), decision/latency/token/cost metrics (Prometheus), audit/log search (Loki) |
+| **Incy** *(optional backdrop)* | `svc/web` (ns `incy`) | a realistic site-reliability-engineering (SRE) incident-management app the agents can act against |
 
 ### Control-plane console — the tabs
 
@@ -224,7 +224,7 @@ Screenshots of each tab live in `docs/walkthrough/` in the platform repo (e.g.
 
 A single-binary `grafana/otel-lgtm` deployment bundles Tempo, Prometheus, and Loki.
 The control-plane and agent-idp emit OTLP spans carrying **DID / VC attributes**
-(`did`, `vcJti`, decision), so a single agent task shows its model + tool + A2A hops
+(`did`, `vcJti`, decision), so a single agent task shows its model + tool + agent-to-agent (A2A) hops
 on one timeline, each decided at the same `/authz` ("one trace, three gates"). The
 portal's **Traces** tab embeds the Tempo Explore view.
 

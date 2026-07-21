@@ -14,10 +14,11 @@ human-in-the-loop layer.
 
 This is the headline flow of the whole platform: an agent is **denied** a regulated
 target, opens a **time-boxed delegation request**, a human **approves** it (minting a
-short-lived Delegation VC), the retried call is **allowed** for exactly that task,
+short-lived Delegation Verifiable Credential (VC)), the retried call is **allowed** for exactly that task,
 and on TTL expiry or revocation deny-by-default reasserts. The
 [temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/)
-runs this end-to-end offline; here is the shape of it:
+runs this end-to-end offline on the Northstar Corp demo personas — Ethan Park is the
+human the agent acts for, Maya Chen the approver; here is the shape of it:
 
 ```mermaid
 sequenceDiagram
@@ -67,7 +68,10 @@ leaves for `expired` (TTL) or `revoked` (live StatusList), both terminal denies.
 Separation of duties is enforced by the **two-gate approval rule**
 (`authority.py::decide`): an approver must hold `org:agents:approve` **and**
 `covers_scenario` (at least one of the scenario's resource scopes). The owner who
-requested the elevation does **not** self-approve.
+requested the elevation does **not** self-approve. The cast below is the Northstar
+`devops-incident` demo scenario's — the
+[temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/)
+defines each persona.
 
 | Responsibility | Persona (devops-incident) | Authority required | Notes |
 |---|---|---|---|
@@ -140,10 +144,11 @@ glob).
 
 Holding a valid Delegation VC is necessary but not sufficient. At the resource —
 the runbooks-api gate — the agent additionally performs a **challenge-response**
+against its decentralized identifier (DID),
 proving it is the *live holder* in the *expected execution state* (this ticket,
 this scope), defeating stolen or replayed credentials. The SDK's `runbook_tool.py`
 does the two-step `agentdid` flow once a Delegation VC is available, attaching the
-exec-state context:
+exec-state context (`incy` is the demo incident manager the ticket ids come from):
 
 <!-- no-doctest: illustrative fragment — uses `RunbookContext` from a neighbouring block (not standalone-runnable) -->
 ```python

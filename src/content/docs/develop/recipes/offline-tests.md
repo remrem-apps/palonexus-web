@@ -13,11 +13,15 @@ Three fixtures cover the common cases:
 |---|---|
 | `fake_control_plane` | a fresh in-memory `FakeControlPlane` (deny-by-default) |
 | `offline_pn` | a `PaloNexus` bound to that fake — the canonical SDK fixture (closed for you) |
-| `devops_personas` | the `devops-incident` `ScenarioAuthority` (owner/sponsor/approver/negative) |
+| `devops_personas` | the `devops-incident` `ScenarioAuthority` — the Northstar demo scenario's owner/sponsor/approver/negative cast |
 
 No setup needed beyond `pip install palonexus` — the plugin registers itself.
 
 ## A deny-by-default test suite
+
+The personas come from the Northstar demo seed (the cast of the
+[temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/)) —
+Claire Evans is the `devops-incident` scenario's always-denied negative persona:
 
 ```python
 # test_governance.py
@@ -68,7 +72,7 @@ pytest test_governance.py -q
 
 ## In CI (the doc-test gate)
 
-The same `offline()` mode powers the docs **doc-test** gate (REM-144): every code snippet in
+The same `offline()` mode powers the docs **doc-test** gate: every code snippet in
 these docs is executed in `offline()` and must pass, so the examples can never silently rot. Run
 the shipped examples as smoke tests the same way:
 

@@ -31,7 +31,7 @@ path runs in CI with no cluster, no keys, and no network.
 | `PALONEXUS_MGMT_URL` | `http://localhost:8181` | **used** | ignored | Control-plane management API (`:8181`) — registry + `/v1/audit` (used by `pn.audit`). |
 | `PALONEXUS_IDP_URL` | `http://localhost:8090` | **used** | ignored | agent-idp base URL (`:8090`) — register, provision, delegations, revocation, directory. |
 | `PALONEXUS_API_KEY` | unset (`None`) | **used** | ignored | The SDK API key (`pn_live_…` / `pn_test_…`), sent as a `Bearer` on idp + management calls. |
-| `PALONEXUS_TENANT_ID` | `""` | **used** | `"offline"` | Default org/tenant id for governance calls (e.g. the Northstar org id `7gdgqfu5j0oo`). |
+| `PALONEXUS_TENANT_ID` | `""` | **used** | `"offline"` | Default org/tenant id for governance calls (e.g. `7gdgqfu5j0oo`, the org id of Northstar Corp, the fictional demo organization). |
 | `PALONEXUS_AGENT_TOKEN` | `""` | **used** | ignored | Workload token presented as `Authorization` on egress `/authz` calls; absent → anonymous, and private targets deny. |
 
 ### SDK API keys (`pn_live_` / `pn_test_`)
@@ -59,19 +59,20 @@ moment they are revoked** — the next call the SDK makes with a revoked key is 
 | Env var | Default | Purpose |
 |---|---|---|
 | `PALONEXUS_IDP_URL` | `http://agent-idp.agent-idp.svc:8090` | The agent-idp base URL — register, provision, delegation, and `did:web` resolution. |
-| `AGENTDID_ISSUER_DID` | `did:web:agent-idp.agent-idp.svc` | The issuer/root DID used to verify issuer-signed VCs. |
+| `AGENTDID_ISSUER_DID` | `did:web:agent-idp.agent-idp.svc` | The issuer/root Decentralized Identifier (DID) used to verify issuer-signed Verifiable Credentials (VCs). |
 
-`PALONEXUS_IDP_URL` is also the base URL the bundled enterprise-IAM CLIs
-(`directory_cli`, `identity_cli`, `governance_cli`, `authority_cli`, `revocation_cli`,
-`sts_cli`) read — point them at a local server or a DOKS port-forward with the same var.
+`PALONEXUS_IDP_URL` is also the base URL the bundled enterprise identity-and-access-management
+(IAM) CLIs (`directory_cli`, `identity_cli`, `governance_cli`, `authority_cli`, `revocation_cli`,
+`sts_cli`) read — point them at a local server or a DigitalOcean Kubernetes (DOKS)
+port-forward with the same var.
 
 ## Enterprise IAM (agent-idp)
 
 The enterprise-IAM layer (directory sync, employee identity resolution, agent
-governance, human-authority delegation, revocation cascade, and the agent STS) is
-configured **on the agent-idp side**, not in the agent pod. It adds **no new required
+governance, human-authority delegation, revocation cascade, and the agent Security Token
+Service, STS) is configured **on the agent-idp side**, not in the agent pod. It adds **no new required
 env vars**: it persists through the same `IDP_STORE_BACKEND` / `IDP_DB_URL` as the rest
-of the IdP, and the STS signer **reuses the existing `ISSUER_PRIVATE_KEY_B64` issuer
+of the identity provider (IdP), and the STS signer **reuses the existing `ISSUER_PRIVATE_KEY_B64` issuer
 key** — no separate signing key.
 
 The knobs an operator would tune are **module constants** today (MVP; a future release
@@ -112,7 +113,7 @@ endpoints; the [Connect agents to enterprise authority — hands-on](/docs/devel
 
 | Env var | Default | Read by | Purpose |
 |---|---|---|---|
-| `PALONEXUS_USE_EGRESS_SIDECAR` | unset | `llm.py` | When set, `build_llm` uses a plain HTTP client (the broker `base_url` already targets the sidecar, which owns the proxy + VP). When unset, the in-process proxied client is used. |
+| `PALONEXUS_USE_EGRESS_SIDECAR` | unset | `llm.py` | When set, `build_llm` uses a plain HTTP client (the broker `base_url` already targets the sidecar, which owns the proxy + verifiable presentation, VP). When unset, the in-process proxied client is used. |
 | `PALONEXUS_IDENTITY_FILE` | (agent: unset; sidecar: `/var/run/palonexus-identity/identity.json`) | `app.py`, sidecar | The shared identity file the agent writes (`{did, privateKeyB64, membershipVc}`) and the sidecar reads to mint fresh VPs. The agent only writes it when this is set. |
 | `REAL_BROKER_URL` | `http://model-broker.palonexus.svc.cluster.local:8080` | sidecar | The real broker the sidecar forwards to. |
 | `EGRESS_PROXY_URL` | `http://egress-proxy.palonexus.svc.cluster.local` | sidecar | The egress proxy the sidecar routes through, with the VP as `Proxy-Authorization`. |

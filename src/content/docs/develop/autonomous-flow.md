@@ -56,15 +56,17 @@ point is also a deny (`ControlPlaneUnavailable`), never a silent allow.*
 
 ### 1. incident-triage summarizes (model egress)
 
-Given an incy incident id, the agent's `summarize` node calls the LLM via the model
-broker. The model call goes through the localhost egress sidecar, which mints a VP
-and forwards through the proxy — decided at `/authz` as
+Given an incident id from incy (the demo PagerDuty-style incident manager), the
+agent's `summarize` node calls the LLM via the model
+broker. The model call goes through the localhost egress sidecar, which mints a
+Verifiable Presentation (VP) and forwards through the proxy — decided at `/authz` as
 `egress.proxy … model-openai allow=True`. The summary names the most relevant
 runbook slug.
 
 ### 2. attempt_read is denied
 
-The `attempt_read` node tries the runbook via the DID/VC challenge-response. It
+The `attempt_read` node tries the runbook via the DID/VC (decentralized identifier /
+Verifiable Credential) challenge-response. It
 holds only a **Membership VC** — no Capability/Delegation for runbooks-api — so the
 read is denied. The node branches to `escalate` (and is wired to retry the read
 after escalation):
@@ -81,7 +83,7 @@ def attempt_read(state) -> Command[Literal["escalate", "propose"]]:
 
 ### 3. escalate to the access-broker (A2A egress)
 
-The `escalate` node calls the access-broker agent — an **agent-to-agent** hop. This
+The `escalate` node calls the access-broker agent — an **agent-to-agent** (A2A) hop. This
 edge is itself egress: it goes through the PaloNexus egress proxy carrying
 incident-triage's Membership VP via `proxied_client`, so the A2A hop is decided at
 `/authz` like any other egress (without the VP the proxy returns `407`). Crucially

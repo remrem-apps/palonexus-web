@@ -8,7 +8,8 @@ sidebar:
 `palonexus_agent` (`agents/palonexus_agent/`) is the shared scaffold for
 PaloNexus-governed LangGraph agents. It wires identity bootstrap, model-broker
 access, egress gating, the regulated runbook tool, and a FastAPI host into a few
-reusable building blocks. It depends on [`agentdid`](/docs/sdk/agentdid/) for all
+reusable building blocks. It depends on [`agentdid`](/docs/sdk/agentdid/) — the
+Decentralized Identifier (DID) and Verifiable Credential (VC) library — for all
 crypto.
 
 Top-level exports:
@@ -94,7 +95,7 @@ def build_llm(settings: Settings | None = None, *, large: bool = False,
     and routes to `/authz`. `base_url` is a setting `langchain_openai` cannot strip
     (unlike `HTTP(S)_PROXY`), which is why the sidecar exists.
   - **Proxied mode** (no sidecar): the in-process `proxied_client` /
-    `proxied_async_client` (httpx proxy + Membership VP) are used.
+    `proxied_async_client` (httpx proxy + Membership verifiable presentation, VP) are used.
 
 <!-- no-doctest: legacy `palonexus_agent` scaffold (graduated into `palonexus`) — not the shipped package; page pending REM-159 -->
 ```python

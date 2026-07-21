@@ -5,7 +5,7 @@ sidebar:
   order: 50
 ---
 
-PaloNexus is **IdP-neutral** and configured almost entirely by environment variables, so it
+PaloNexus is **identity-provider (IdP) neutral** and configured almost entirely by environment variables, so it
 has a deliberately small CLI surface. There is no single `palonexus` binary. Instead there are
 four distinct command-line surfaces:
 
@@ -13,7 +13,7 @@ four distinct command-line surfaces:
 |---|---|---|
 | `seed-logto` | the **reference DEMO seeder** — loads the Northstar demo org into a Logto reference tenant | only to stand up the demo identity model |
 | `make` (platform `Makefile`) | build/test/render/deploy the control-plane | building images and rendering/applying manifests |
-| `kubectl` / kustomize | apply the control layer to a cluster | deploying to DOKS or self-hosting |
+| `kubectl` / kustomize | apply the control layer to a cluster | deploying to DigitalOcean Kubernetes (DOKS) or self-hosting |
 | Python SDK (`palonexus`) | the **programmatic** entry point — no standalone CLI binary | embedding governance in your own code/tests |
 
 ## `seed-logto` — the reference demo seeder
@@ -23,7 +23,8 @@ four distinct command-line surfaces:
 **IdP-neutral** and needs no Logto: the seeder only loads the **Northstar demo org**
 (workforce identity) into a **Logto reference tenant** so the allow/deny/needs-approval
 verdicts have realistic personas and scopes to decide against. A bring-your-own-IdP
-deployment skips it entirely and connects its own OIDC/SCIM workforce IdP (Okta, Microsoft
+deployment skips it entirely and connects its own OpenID Connect (OIDC) / SCIM (System for
+Cross-domain Identity Management) workforce IdP (Okta, Microsoft
 Entra ID, Auth0, Ping, Google Workspace, Amazon Cognito, Keycloak, Logto, …) — see the
 [IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model).
 :::
@@ -83,7 +84,7 @@ python3 seed_logto.py --offline plan            # dry-run against the in-memory 
 ### Key environment
 
 The seeder is configured entirely by `LOGTO_*` (an `.env.example` ships in
-`platform/seed-logto/`). The full table — with aliases, examples, and the secret M2M
+`platform/seed-logto/`). The full table — with aliases, examples, and the secret machine-to-machine (M2M)
 credentials — is the **reference demo seeder env table** in
 [Environment variables](/docs/reference/env-vars/#reference-demo-seeder--logto-logto_).
 The load-bearing ones:
@@ -143,7 +144,7 @@ The control-plane is built and deployed from the platform `Makefile` (`platform/
 | Target | What it does |
 |---|---|
 | `make test` | `go test ./...` in `control-plane/` — policy matrix + audit hash-chain unit tests |
-| `make smoke` | build the binary, boot it, and exercise the `ext_authz` decision flow (allow 200 / deny 403 over `:9191/authz`) |
+| `make smoke` | build the binary, boot it, and exercise Envoy's external-authorization (`ext_authz`) decision flow (allow 200 / deny 403 over `:9191/authz`) |
 | `make image` | `docker build` the container image (`$(IMAGE)`) |
 | `make render` | kustomize-render the full control layer to stdout (no apply) |
 | `make deploy` | `kubectl apply -k $(OVERLAY)` — apply the control layer to the current kube-context |
@@ -157,7 +158,7 @@ make deploy
 
 :::caution[`make deploy` has prerequisites]
 `make deploy` applies the `SecurityPolicy.extAuth` enforcement point, which depends on the
-**Gateway API CRDs + Envoy Gateway** already being installed. Install those first (see the
+**Gateway API CRDs** (Custom Resource Definitions) **+ Envoy Gateway** already being installed. Install those first (see the
 platform README / runbook) or the apply will fail on missing CRDs.
 :::
 

@@ -22,12 +22,14 @@ One quickstart, two paths. Pick the tab that matches what you're here to do:
 This is the **ten-minute first success**: from `pip install` to a governed call that is
 **denied by default**, then **approved**, then **succeeds** — with **no cluster, no network,
 no API key**. Everything runs against `PaloNexus.offline()`, an in-memory control plane
-seeded with the real **devops-incident** personas.
+seeded with the personas of the real **devops-incident** demo scenario.
 
-The story you'll run is the Northstar `devops-incident` scenario from the
-[demo seed (the reference Logto org)](/docs/develop/enterprise-iam/): an SRE agent (`northstar-devops-incident-agent`)
+The story you'll run is the `devops-incident` scenario at Northstar — the fictional demo
+organization — from the
+[demo seed (the reference Logto org)](/docs/develop/enterprise-iam/): a site-reliability (SRE) agent (`northstar-devops-incident-agent`)
 owned by **Ethan Park**, sponsored and approved by **Maya Chen**, wants to read a regulated
-runbook during incident `INC-4821`. Deny-by-default means it can't — until Maya approves a
+runbook during incident `INC-4821` — the sample incident used across these docs.
+Deny-by-default means it can't — until Maya approves a
 task-scoped delegation.
 
 <Aside type="note" title="No invented users">
@@ -39,11 +41,11 @@ demo seeder in `platform/seed-logto` (the reference Logto org).
 
 <Aside type="note" title="The SDK is partner-neutral — this page uses a reference demo">
 PaloNexus core is about **agents, owners, delegations, tasks, resources, and decisions** —
-not any specific IdP or protected resource. This page uses the **runbooks** demo resource
+not any specific identity provider (IdP) or protected resource. This page uses the **runbooks** demo resource
 (`runbooks-api:/runbooks/…`, action `runbooks:read`) and the Northstar/Logto reference seed
 because they're concrete and runnable — but they are **one reference integration, not a
 requirement**. Any resource and scope work the same way: swap in `payments-api` /
-`payments:write`, point at any SCIM IdP (Logto is just the reference), and the calls below are
+`payments:write`, point at any SCIM (System for Cross-domain Identity Management) IdP (Logto is just the reference), and the calls below are
 unchanged. The demo's service→scope mapping lives in `palonexus.reference`; the generic core
 ships without it.
 </Aside>
@@ -81,7 +83,7 @@ data, register the first agent, then run the hero flow:
 ![PaloNexus Day-0 onboarding wizard with step 1 'Connect Logto' active; a tenant-connected panel confirms the sandbox Logto tenant with a stored secret and offers Validate and Skip/offline buttons](/docs/screenshots/onboarding.png)
 
 *Reference demo: the Day-0 wizard's 'Connect Logto' step uses the demo's reference Logto IdP.
-Production deployments connect their own OIDC/SCIM IdP — see
+Production deployments connect their own OpenID Connect (OIDC)/SCIM IdP — see
 [Connect agents to enterprise authority](/docs/concepts/enterprise-iam/). This quickstart
 reproduces the same loop entirely offline.*
 
@@ -279,8 +281,8 @@ print(identity.did)                           # did:key:z…
 
 <Aside type="note" title="`runtime` is just a label">
 `runtime="doks_prod"` is an example **runtime label** describing *where* the agent
-runs — a free-form tag like `k8s_prod` or `local_dev`. It is not a DOKS/DigitalOcean
-requirement; PaloNexus runs on any Kubernetes or via Docker Compose.
+runs — a free-form tag like `k8s_prod` or `local_dev`. It is not a DigitalOcean Kubernetes
+Service (DOKS) requirement; PaloNexus runs on any Kubernetes or via Docker Compose.
 </Aside>
 
 The mandatory-ownership rule, demonstrated:
@@ -388,7 +390,7 @@ print(report)                 # {'delegations_revoked': N, 'agents_suspended': �
 |---|---|---|
 | Register | `pn.agents.register(owner=, sponsor=)` | Mandatory ownership governance |
 | Provision | `agent.provision()` | `did:key` + Membership VC minted |
-| Bind work | `with pn.task(subject=, task_id=, scenario=)` | On-behalf-of + TBAC task binding |
+| Bind work | `with pn.task(subject=, task_id=, scenario=)` | On-behalf-of + Task-Based Access Control (TBAC) task binding |
 | Ask | `task.check(action=, resource=)` | `/authz` decision (deny-by-default) |
 | Delegate | `task.request_delegation(...)` | Task-scoped, time-boxed grant |
 | Approve | *(human / portal)* | `org:agents:approve` authority |
@@ -431,8 +433,8 @@ make demo-up         # build images, create the kind cluster, apply the overlay,
 
 This brings up the full decision stack — gateway, identity, registry, policy, observability,
 and audit, the implementation mechanisms beneath the five pillars — plus the four demo
-agents, Grafana LGTM, and the portal. When it
-finishes, the consoles are port-forwarded:
+agents, the Grafana LGTM observability stack (Loki, Grafana, Tempo, Mimir), and the portal.
+When it finishes, the consoles are port-forwarded:
 
 - **Portal** — http://localhost:3000 (Overview, Registry, Decisions, Audit, Identity,
   Approvals, Egress Approvals, Agents, Traces)
@@ -479,8 +481,8 @@ and [the autonomous flow](/docs/develop/autonomous-flow/).
 Built and governed your first agent (tab 1)?
 
 - [Guard a LangChain tool](/docs/sdk/langchain/) — drop the gate into `create_agent`.
-- [Govern a LangGraph node (HITL)](/docs/sdk/langgraph/) — deny → interrupt → approve →
-  resume, with the durable-checkpointer requirement.
+- [Govern a LangGraph node (HITL)](/docs/sdk/langgraph/) — a human-in-the-loop (HITL)
+  deny → interrupt → approve → resume flow, with the durable-checkpointer requirement.
 - [SDK overview & layers](/docs/sdk/) and the [API reference](/docs/sdk/reference/).
 - [Temporary elevation walkthrough (INC-4821)](/docs/develop/guides/temporary-elevation-walkthrough/) —
   the full hero flow, narrated end to end.

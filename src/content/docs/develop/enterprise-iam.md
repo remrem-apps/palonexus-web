@@ -7,11 +7,14 @@ sidebar:
 
 The teeth of this walkthrough are **lifecycle-linked revocation**: when a directory
 sync reports a leaver or a mover, the delegations that person backed are revoked,
-their agents are quarantined, and the STS refuses to mint new credentials — all
-automatically, from one directory change. The enterprise-IAM layer in `agent-idp`
+their agents are quarantined, and the STS (security token service) refuses to mint
+new credentials — all
+automatically, from one directory change. The enterprise-IAM (identity and access
+management) layer in `agent-idp`
 answers a different question than the egress gate does: not *may this call go out?*
 but *who, in the org, is this agent acting for, and does that human actually hold the
-authority being delegated?* It pulls the enterprise directory in (SCIM), reconciles
+authority being delegated?* It pulls the enterprise directory in via SCIM (System
+for Cross-domain Identity Management), reconciles
 sign-ins against it, governs agent ownership, ties every delegation to a real human
 authority, cascades revocation when people leave, and mints short-lived runtime
 credentials (agent tokens) that separate the **agent** subject from the **human**
@@ -43,7 +46,7 @@ pip install -e ".[test]"
 ```
 
 The CLIs are stdlib-only HTTP, so they run from the same venv against the local
-server, a DOKS port-forward, or any reachable instance. Every CLI honours
+server, a DOKS (DigitalOcean Kubernetes Service) port-forward, or any reachable instance. Every CLI honours
 `--base` and the `PALONEXUS_IDP_URL` environment variable (default
 `http://localhost:8090`):
 
@@ -55,7 +58,7 @@ All commands below are run from `agent-idp/` with the venv active.
 
 ## 1. Sync the directory
 
-The directory sync pushes a mock SCIM 2.0 snapshot into the IdP and prints a
+The directory sync pushes a mock SCIM 2.0 snapshot into the IdP (identity provider) and prints a
 reconcile report. Two tenants render: **acme-corp** (22 employees, 7 departments,
 10 groups, nested reporting lines) and **globex** (6 employees — same display names,
 different `oid`s, proving cross-tenant isolation).
@@ -71,7 +74,7 @@ employees, because each person is keyed by a stable IdP `oid` (the SCIM `externa
 never by email.
 
 Eight named personas anchor the scenarios across all six features: **Alice Chen**
-(Engineering Manager), **Bob Patel** (SRE), **Maya Singh** (Finance Approver),
+(Engineering Manager), **Bob Patel** (site-reliability engineer, SRE), **Maya Singh** (Finance Approver),
 **Carlos Rivera** (Security Admin), **Dana Kim** (contractor), **Jordan Lee** (email
 change), **Priya Shah** (inactive former employee), and **Morgan Taylor** (manager who
 changes departments).
@@ -99,7 +102,7 @@ not fork them — and re-running v2 never resurrects a deactivated employee.
 
 ## 2. Resolve a sign-in (token ↔ SCIM precedence)
 
-When an employee signs in, the IdP resolves their OIDC token against the synced
+When an employee signs in, the IdP resolves their OIDC (OpenID Connect) token against the synced
 directory and applies precedence: **the directory is the source of truth for status
 and entitlements; the token never elevates.** The CLI replays decoded login-token
 claim sets at `POST /v1/identity/resolve`:
@@ -227,7 +230,7 @@ restored only by an explicit ownership transfer (see §3).
 ## 6. Mint an agent token (STS)
 
 The STS exchanges a valid, human-backed delegation plus the agent's proof-of-possession
-for a short-lived, audience-bound EdDSA JWT. The token separates the **agent** subject
+for a short-lived, audience-bound EdDSA JWT (JSON Web Token). The token separates the **agent** subject
 (`sub` = `agent:<tenant>:<agent>`) from the **human** actor (`act`), and carries the
 `delegation_id`, `task_id`, and a `cnf` proof claim. It is signed with the **existing**
 issuer Ed25519 key — there is no new signing key.
@@ -294,7 +297,8 @@ to a clean, known state, then open the port-forwards:
 `demo-doks-seed.sh` wipes **only** the enterprise-IAM demo tables (`idp_employees`,
 `idp_groups`, `idp_syncs`, `idp_agent_governance`, `idp_gov_delegations`,
 `idp_revocations_log`, `idp_tokens`) — the crypto-egress tables used by the agent hero
-flow are left intact — then syncs the directory, governs + activates the agents, grants
+flow (the [temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/))
+are left intact — then syncs the directory, governs + activates the agents, grants
 a few authorized delegations, replays sign-ins, and runs an initial cascade so the
 `hr-bot` orphan shows. The full runbook lives in `docs/DEMO.md` in the platform repo.
 
@@ -302,11 +306,12 @@ a few authorized delegations, replays sign-ins, and runs an initial cascade so t
 
 The PaloNexus portal surfaces the same state the CLIs drive:
 
-- **Directory** (`/directory`) — the F1 sync result and the F2 sign-in resolutions:
-  active/inactive employees, group membership, and the token-vs-SCIM conflicts.
-- **Governance** (`/governance`) — F3 ownership and the activation gate, the F4 cascade
-  and its reason codes, the F5 authority bases on each delegation, and the F6 token
-  audit log.
+- **Directory** (`/directory`) — the directory-sync result (§1) and the sign-in
+  resolutions (§2): active/inactive employees, group membership, and the
+  token-vs-SCIM conflicts.
+- **Governance** (`/governance`) — agent ownership and the activation gate (§3), the
+  revocation cascade and its reason codes (§5), the authority bases on each
+  delegation (§4), and the token audit log (§6).
 
 For the raw API, the `agent-idp` Swagger UI at `:8090/docs` lists every
 `/v1/directory`, `/v1/identity`, `/v1/governance`, `/v1/authority`, `/v1/revocation`,

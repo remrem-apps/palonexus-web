@@ -13,18 +13,18 @@ agents, refused credentials, and a durable, reason-coded remediation log. Runtim
 sandbox lifecycle is about containers; this lifecycle is about **organizational
 authority**.
 
-PaloNexus runs **alongside** your workforce IdP (Okta, Entra ID, Google Workspace,
-JumpCloud) — it does not replace it. The IdP stays the source of truth for employees;
+PaloNexus runs **alongside** your workforce identity provider (IdP) — Okta, Entra ID, Google Workspace,
+JumpCloud — it does not replace it. The IdP stays the source of truth for employees;
 PaloNexus is the *agent* identity, delegation, authorization, and audit layer
 that sits next to it and keeps agent authority tied to current human authority.
 
 ## Division of ownership: the workforce IdP owns humans, PaloNexus owns agents
 
 The whole model rests on a clean split of responsibility. **Your workforce IdP owns humans**
-(Logto in the demo) — it is the IdP that holds employees and groups (kept current by SCIM), the organization
+(Logto in the demo) — it is the IdP that holds employees and groups (kept current by SCIM, the System for Cross-domain Identity Management), the organization
 roles people are assigned, the `org:agents:*` authority scopes those roles carry, and the
 scenario API resources/scopes (`runbooks:read`, `incidents:read`, …). **PaloNexus owns
-agents** — it issues each agent a cryptographic identity (`did:key` + Membership VC),
+agents** — it issues each agent a cryptographic identity (`did:key` + a Membership Verifiable Credential (VC)),
 records accountable ownership, classifies targets in its asset-type taxonomy, and mints the
 task-scoped **delegations** that let an agent act. The bridge between the two halves is a
 human: a delegation is only valid when the person granting it *holds* the matching authority
@@ -80,12 +80,12 @@ exercise authority that Logto records and PaloNexus enforces.
 | API resource scopes (`runbooks:read`…) | **Owns** | Maps to delegation task scope | — |
 | Agent identity (`did:key`, Membership VC) | — | **Owns** (agent-idp issues) | — |
 | Accountable agent ownership | Provides the employee it points to | **Owns** (`owner_ref`, sponsor, risk_tier) | Named as owner / sponsor |
-| Task-scoped delegations (TBAC) | Provides the authority that justifies them | **Owns** (records, enforces, expires) | Requests / **approves** |
-| Temporary elevation (approvals) | — | **Owns** the queue + STS exchange | **Approves / denies** |
+| Task-scoped delegations (TBAC — task-based access control) | Provides the authority that justifies them | **Owns** (records, enforces, expires) | Requests / **approves** |
+| Temporary elevation (approvals) | — | **Owns** the queue + Security Token Service (STS) exchange | **Approves / denies** |
 | Audit trail | Logs its own admin events | **Owns** the hash-chained decision log | Reviews / verifies |
 
 > **Logto is the reference IdP used in the demo seed.** The "Workforce IdP / IAM" column
-> describes the IdP's role generically — any OIDC/SCIM-compliant IdP (Okta, Microsoft Entra
+> describes the IdP's role generically — any OpenID Connect (OIDC) / SCIM-compliant IdP (Okta, Microsoft Entra
 > ID, Auth0, Ping, Google Workspace, Amazon Cognito, Keycloak, Logto) fills it the same way.
 > See the [IdP support model](#idp-support-model) below.
 
@@ -143,7 +143,7 @@ reactivate the **same** record; re-sync is idempotent and tenant-isolated.
 ### F2 — Stable employee identity
 
 Distinguishes *authentication claims* (a login token) from *durable enterprise identity*
-(SCIM). A resolver derives the stable subject from token claims (Entra `iss`/`tid`+`oid`,
+(SCIM). A resolver derives the stable subject from token claims (Entra ID `iss`/`tid`+`oid`,
 Okta `iss`+`sub`) and applies explicit source-precedence; conflicts are surfaced, never
 silently applied.
 
@@ -191,7 +191,7 @@ delegation.
 ### F6 — STS token exchange
 
 An MVP Security Token Service that exchanges agent identity + delegation evidence + agent
-proof-of-possession into a short-lived, audience-bound JWT — the **short-lived runtime
+proof-of-possession into a short-lived, audience-bound JSON Web Token (JWT) — the **short-lived runtime
 credential** a normal resource server can consume. It validates fail-closed against every prior link — agent governance, delegation
 usability (the F4 cascade composes here), task/action/resource match, human actor status,
 audience, proof, and TTL.
@@ -203,8 +203,10 @@ audience, proof, and TTL.
 ## Permission model: org roles → agent authority
 
 The `org:agents:*` scopes are the concrete authority an org role carries. The table below
-maps the five **devops-incident** personas to the scopes their seeded Northstar org roles
-grant — exactly as the `seed-logto` Northstar fixture assigns them. Read each row as "what
+maps the five personas of the **devops-incident** demo scenario (the incident-response
+scenario these docs use throughout) to the scopes their seeded org roles at Northstar Corp
+— the fictional demo organization — grant, exactly as the `seed-logto` Northstar fixture
+assigns them. Read each row as "what
 this person is allowed to do with agents":
 
 | Persona | Seeded org role(s) | `own` | `sponsor` | `approve` | `operate` | `audit` |
@@ -254,7 +256,7 @@ Cognito, Keycloak, Logto**, or any other — plugs into exactly the same surface
 ### How an IdP connects
 
 The diagram reads left to right. Your workforce IdP exposes **standard surfaces** — OIDC
-sign-in plus a JWKS endpoint, SCIM / directory sync (or API sync / webhooks) — and PaloNexus
+sign-in plus a JSON Web Key Set (JWKS) endpoint, SCIM / directory sync (or API sync / webhooks) — and PaloNexus
 consumes them to learn a **stable employee subject**, **groups**, **org roles**, and
 **lifecycle status**. From that human authority, PaloNexus runs everything your IdP does not:
 agent identity, human-authorized delegation, the `/authz` decision, time-boxed elevation, and
@@ -366,7 +368,7 @@ It is **one FastAPI service**, `agent-idp` — no new microservice was introduce
 feature extends the existing identity pillar and reuses its pluggable persistence
 (`IDP_STORE_BACKEND`: `memory` · `sqlite` · `postgres` · `mysql` · `mongodb`), so on a
 durable backend the directory, governance, and revocation state survive restarts. Audit is
-emitted as OTel spans (`directory.sync`, `governance.transition`, `revocation.cascade`,
+emitted as OpenTelemetry (OTel) spans (`directory.sync`, `governance.transition`, `revocation.cascade`,
 `delegation.authorize`, `sts.exchange`) into the same observability and audit fabric the
 rest of the platform uses.
 
@@ -398,7 +400,8 @@ In the operator portal it surfaces as two tabs:
 ## Scope note
 
 This is an **MVP agent IAM authorization service**, deliberately scoped to prove the
-control loop. Deferred enterprise cases — full SCIM provisioning, an ABAC policy engine,
-DPoP / mTLS-bound tokens, a JWKS endpoint and key rotation, multi-approver workflows,
+control loop. Deferred enterprise cases — full SCIM provisioning, an attribute-based access
+control (ABAC) policy engine,
+DPoP / mutual-TLS (mTLS) bound tokens, a JWKS endpoint and key rotation, multi-approver workflows,
 token introspection / revocation lists, and more — are tracked in the repository
 `BACKLOG.md` rather than silently omitted.

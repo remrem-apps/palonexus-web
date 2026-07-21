@@ -15,10 +15,12 @@ attestation without trusting PaloNexus's live API?**
 
 This page covers the credential machinery that makes those proofs hold: cryptographic
 egress identity, revocation on the decision path, the durable human identity behind every
-agent, and the compliance/provenance **governance credentials**. Throughout, DID/VC is
+agent, and the compliance/provenance **governance credentials**. Throughout, DID/VC —
+Decentralized Identifiers (DIDs) and Verifiable Credentials (VCs) — is
 **one supported credential format** — the mechanism PaloNexus uses to make signed agent
 credentials and proof of authorization independently verifiable, not the product category.
-All of it is shipped and verified live on a managed Kubernetes cluster (DOKS example);
+All of it is shipped and verified live on a managed Kubernetes cluster (DigitalOcean
+Kubernetes — DOKS — example);
 the durable storage underneath is covered in [Persistence (operations)](/docs/operations/persistence/).
 
 ## Cryptographic egress identity
@@ -66,13 +68,13 @@ re-checks the StatusList every time. This powers the **live-revocation race** de
 revoke a VC in the portal and the next decision denies in under a second.
 
 This makes agent identity *cryptographic and revocable* end-to-end, while
-delegation / TBAC for regulated targets layers on top exactly as before.
+delegation / task-based access control (TBAC) for regulated targets layers on top exactly as before.
 
 ## Durable identity: SCIM directory sync
 
 Cryptographic agent identity only stays trustworthy if the **human** identity behind it is
-current. That is what the agent-idp directory sync persists: the enterprise IdP pushes its
-workforce over **SCIM 2.0**, agent-idp reconciles it into the same durable store, and the
+current. That is what the agent-idp directory sync persists: the enterprise identity provider (IdP) pushes its
+workforce over **SCIM 2.0** (the System for Cross-domain Identity Management), agent-idp reconciles it into the same durable store, and the
 result is a **stable subject** that survives email changes, re-syncs, and pod restarts.
 
 The sequence below shows one sync. The IdP sends a Users + Groups snapshot to
@@ -135,7 +137,8 @@ answer the disclosure part:
 - **Provenance credential** — "this agent's *outputs* came from base model X, trained on Y,
   under declared owner Z," self-declared by whoever operates the agent.
 
-Both are real, signed `agentdid` JWT-VCs anchored to the issuer's `did:web` document — not
+Both are real, signed `agentdid` JWT-VCs — VCs serialized as JSON Web Tokens (JWTs) —
+anchored to the issuer's `did:web` document — not
 JSON rows a caller has to trust agent-idp's live API to report honestly.
 
 ### The gap this closes

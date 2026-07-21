@@ -57,10 +57,10 @@ The whole tree, with its trigger, the wire signal behind it, and how to handle i
 | Exception | Triggered when | HTTP / deny-reason | How to handle |
 |---|---|---|---|
 | `GovernanceError` | `register(...)` without an `owner` or `sponsor` (no-orphaned-agents) | client-side, **before any network call** (re-validated at agent-idp) | Supply both a mandatory owner and business sponsor. |
-| `PolicyDenied` | a hard deny on a governed action | **403** + `X-Palonexus-Deny-Reason` | No path forward — inspect `e.reason` / `e.decision`; fix scope/allowlist/OPA. |
+| `PolicyDenied` | a hard deny on a governed action | **403** + `X-Palonexus-Deny-Reason` | No path forward — inspect `e.reason` / `e.decision`; fix the scope, allowlist, or OPA (Open Policy Agent) policy. |
 | `ApprovalRequired` | a regulated target with no approved delegation | **401** + `X-Palonexus-Needs-Approval: true` | Drive `task.request_delegation(...)` (or `interrupt()` in LangGraph) and have an [approver](/docs/getting-started/glossary/) approve. |
 | `DelegationExpired` | a delegation's `notAfter` / TTL has elapsed | live `GET /v1/delegations/check` → `ok=false (expired)` | Request a fresh delegation; do not extend the old one. |
-| `CredentialRevoked` | a Membership/Delegation VC was revoked mid-run (live StatusList) | **403** `agent identity verification failed` | Stop cleanly, **don't retry** — the [revocation race](/docs/develop/recipes/revocation-race/). |
+| `CredentialRevoked` | a Membership/Delegation VC (Verifiable Credential) was revoked mid-run (live StatusList) | **403** `agent identity verification failed` | Stop cleanly, **don't retry** — the [revocation race](/docs/develop/recipes/revocation-race/). |
 | `IdentityNotProvisioned` | an operation needs a `did:key` the agent doesn't have yet | n/a (no provisioned identity) | Call `agent.provision()` before delegating/presenting. |
 | `ControlPlaneUnavailable` | `/authz` or agent-idp could not be reached | transport error (**fail-closed**) | Surface/retry — **never** catch-and-ignore; that would defeat deny-by-default. |
 
@@ -78,9 +78,9 @@ The reasons fall into seven families, by which of the five concerns refused the 
 
 | `X-Palonexus-Deny-Reason` | Code | Path | Meaning & fix |
 |---|---|---|---|
-| `invalid credential` | 401 | ingress | A bearer token was presented but failed OIDC verification (bad signature, wrong `aud`, expired). Fix the token / `OIDC_*` config. An *absent* token is anonymous, not this. |
+| `invalid credential` | 401 | ingress | A bearer token was presented but failed OIDC (OpenID Connect) verification (bad signature, wrong `aud`, expired). Fix the token / `OIDC_*` config. An *absent* token is anonymous, not this. |
 | `invalid agent credential` | 401 | egress | The agent's own workload token failed verification. Re-check the agent's token issuer/audience. |
-| `verified agent credential required` | 403 | egress | `AGENT_IDENTITY_MODE=vc` and **no** `X-Palonexus-Agent-VP` was presented. Present a Membership [VP](/docs/getting-started/glossary/) (the SDK / egress-sidecar does this), or run `header` mode for a demo. |
+| `verified agent credential required` | 403 | egress | `AGENT_IDENTITY_MODE=vc` and **no** `X-Palonexus-Agent-VP` was presented. Present a Membership [VP](/docs/getting-started/glossary/) (verifiable presentation — the SDK / egress-sidecar does this), or run `header` mode for a demo. |
 | `agent identity verification failed` | 403 | egress, proxy | The VP did not verify — bad holder signature, wrong audience/nonce, the Membership VC doesn't chain to the issuer, **or the VC is revoked** (StatusList). See [VC expiry & revocation](#vc-expiry-revocation-and-clock-skew). |
 | `actor/credential mismatch` | 403 | egress | The `X-Palonexus-Actor` header names a different agent than the verified VP proves. The header cannot override the credential — fix the actor header (or stop spoofing it). |
 | `agent identity required` | 407 | proxy | No `Proxy-Authorization: Bearer <VP>` on an egress-proxy request. **This is what blocks raw `curl`.** Route through the SDK / egress-sidecar so a VP is attached. |
@@ -108,7 +108,8 @@ The reasons fall into seven families, by which of the five concerns refused the 
 
 ### 4. Delegation / TBAC — *needs-approval* (regulated targets)
 
-These come back as **401 + `X-Palonexus-Needs-Approval: true`** and surface as `ApprovalRequired`.
+These regulated-target denials — the task-based access control (TBAC) layer — come
+back as **401 + `X-Palonexus-Needs-Approval: true`** and surface as `ApprovalRequired`.
 
 | `X-Palonexus-Deny-Reason` | Meaning & fix |
 |---|---|

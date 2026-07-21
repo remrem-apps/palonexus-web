@@ -14,7 +14,7 @@ decision the rest of the platform uses. Because Deep Agents middleware *is* Lang
 `pn._decide` seam, the same deny / needs-approval / allow semantics, the same offline
 `FakeControlPlane`.
 
-It ships three things, matching the plan's §3 example:
+It ships three things:
 
 - **`tool_guard(pn, tool, action=…, resource=…)`** — declares the governed `(action, resource)`
   a Deep Agents tool maps to and returns the *same* tool, so it drops into
@@ -49,7 +49,7 @@ On each governed tool the gate asks `pn` (the live control plane, or the offline
 
 ## The checkpointer requirement (for `interrupt_on`)
 
-Deep Agents HITL is the same LangGraph machinery as the [LangGraph adapter](/docs/sdk/langgraph/#the-durable-checkpointer-requirement):
+Deep Agents human-in-the-loop (HITL) support is the same LangGraph machinery as the [LangGraph adapter](/docs/sdk/langgraph/#the-durable-checkpointer-requirement):
 to `interrupt()` on needs-approval and resume after a human approves, you **must** supply a
 durable **checkpointer** and invoke with a `thread_id`.
 
@@ -61,9 +61,11 @@ requirement as the scaffold's `checkpointer.py`.
 
 ## Wire it up
 
-This is the plan's §3 example, grounded in the shipped
-`examples/deepagents_runbook_governance.py` and the **devops-incident** seed personas
-(owner **Ethan Park**, approver **Maya Chen**; negative persona **Claire Evans**).
+This example is grounded in the shipped
+`examples/deepagents_runbook_governance.py` and the seed personas of **devops-incident**,
+the demo scenario used throughout these docs
+(owner **Ethan Park**, approver **Maya Chen**; negative persona **Claire Evans**); the task
+id `INC-4821` is the docs' sample incident.
 
 ```python
 from deepagents import create_deep_agent
@@ -180,6 +182,6 @@ python examples/deepagents_runbook_governance.py
 ## Next
 
 - [LangChain adapter](/docs/sdk/langchain/) · [LangGraph adapter](/docs/sdk/langgraph/) — the gate this page consolidates onto.
-- [Recipes](/docs/develop/recipes/) — A2A delegation, the revocation race, offline tests.
+- [Recipes](/docs/develop/recipes/) — agent-to-agent (A2A) delegation, the revocation race, offline tests.
 - [Troubleshooting](/docs/develop/troubleshooting/) — every deny reason, decoded.
 - [Glossary](/docs/getting-started/glossary/) — HITL, checkpointer, `thread_id`, ToolMessage.

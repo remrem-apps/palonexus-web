@@ -5,16 +5,19 @@ sidebar:
   order: 2
 ---
 
-When the triage agent can't finish a task alone it calls a **sub-agent**
-([A2A](/docs/getting-started/glossary/)). That hop is **not** a trusted
+When the triage agent can't finish a task alone it calls a **sub-agent** — an agent-to-agent
+([A2A](/docs/getting-started/glossary/)) hop. That hop is **not** a trusted
 internal call — it is gated by the same `/authz` decision, and it carries the **original**
-[on-behalf-of](/docs/getting-started/glossary/) human subject. The sub-agent acts
+[on-behalf-of](/docs/getting-started/glossary/) human subject — here Ethan Park, the owner
+persona from the Northstar demo scenario of the
+[temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/). The sub-agent acts
 for *Ethan*, on *Ethan's* task, with *Ethan's* delegation — it never gains standing authority of
 its own.
 
-This mirrors the platform's hero flow: `incident-triage` reads a runbook (regulated → needs
-approval → Maya approves) and then A2A-calls a remediation sub-agent, the hop carrying
-`subject=ethan.park`.
+This mirrors the platform's hero flow: while triaging INC-4821 (the walkthrough's sample
+incident), `incident-triage` reads a runbook (regulated → needs
+approval → Maya Chen, the approver persona, approves) and then A2A-calls a remediation
+sub-agent, the hop carrying `subject=ethan.park`.
 
 ```python
 from palonexus import PaloNexus
@@ -67,10 +70,10 @@ A2A hop authorized, on-behalf-of: ethan.park@northstar.example
 - **Each edge is independently authorized.** Hop 1 (runbook) and hop 2 (sub-agent) each require
   their own grant — approving one does not silently widen the other.
 - **Auditable end to end.** `pn.audit.tail(task_id="INC-4821")` reconstructs the whole chain,
-  trace-correlated in Tempo on a live deployment.
+  trace-correlated in Tempo (the Grafana trace backend) on a live deployment.
 
 In production, `agent.present(audience="northstar-remediation-agent")` attaches a fresh holder-
-signed [VP](/docs/getting-started/glossary/) to the A2A hop and the
+signed [VP](/docs/getting-started/glossary/) (verifiable presentation) to the A2A hop and the
 [egress proxy](/docs/concepts/egress-enforcement/) enforces it at the network layer.
 
 ## Related

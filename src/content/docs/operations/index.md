@@ -8,8 +8,8 @@ sidebar:
 This section is the **operator's view** of PaloNexus: how the control plane is
 built and configured (Go), how it is deployed (Kustomize), how durable state and
 cryptographic agent identity are turned on, how agent egress is enforced at the
-network layer, how the cloud is provisioned (Terraform on DOKS), and how it is
-observed (Grafana LGTM).
+network layer, how the cloud is provisioned (Terraform on DigitalOcean Kubernetes, DOKS),
+and how it is observed (the Grafana LGTM stack — Loki, Grafana, Tempo, Mimir).
 
 If you are *integrating* an agent rather than running the platform, start with
 [Deploy an agent](/docs/develop/deploy-an-agent/) instead.
@@ -22,11 +22,11 @@ different exposure and threat model:
 
 | Listener | Default addr | Env var | Role |
 |---|---|---|---|
-| **Decision plane** | `:9191` | `DECISION_ADDR` | Envoy `ext_authz` calls `/authz` here on the hot path. A `200` is allow, a `403` is deny. Locked down mesh-only. |
+| **Decision plane** | `:9191` | `DECISION_ADDR` | Envoy's external-authorization hook (`ext_authz`) calls `/authz` here on the hot path. A `200` is allow, a `403` is deny. Locked down mesh-only. |
 | **Management plane** | `:8181` | `MGMT_ADDR` | Registry API, `/healthz`, `/readyz`, `/metrics`. Exposed to operators and CI separately from the data path. |
 | **Egress forward-proxy** | `:9092` | `EGRESS_PROXY_ADDR` | Every outbound agent call (`HTTP(S)_PROXY` in the pod) flows through here, gets a `/authz`-equivalent egress decision, and is forwarded only on allow. **Only started when `AGENT_IDP_URL` is set** — without an identity verifier the proxy can't soundly prove the caller. |
 
-Splitting the listeners lets the data path be mesh-only/mTLS while the management
+Splitting the listeners lets the data path be mesh-only with mutual TLS (mTLS) while the management
 API is reachable by operators, and keeps the egress proxy off entirely in
 configurations that don't gate egress.
 
@@ -39,10 +39,10 @@ zones:
 
 | Namespace | What runs there |
 |---|---|
-| `palonexus` | control-plane, OPA, Dex (human OIDC), the model-broker (LiteLLM), the portal |
-| `apps` | the authority-bound agent workloads (the four demo SRE agents) + their egress NetworkPolicies |
-| `agent-idp` | the `did:web` agent identity provider (its own namespace so the Service DNS matches its DID) |
-| `observability` | Grafana LGTM + the standalone OTel Collector |
+| `palonexus` | control-plane, Open Policy Agent (OPA), Dex (human OpenID Connect, OIDC, sign-in), the model-broker (LiteLLM), the portal |
+| `apps` | the authority-bound agent workloads (the four demo site-reliability-engineering, SRE, agents) + their egress NetworkPolicies |
+| `agent-idp` | the `did:web` agent identity provider (IdP) — its own namespace so the Service DNS matches its Decentralized Identifier (DID) |
+| `observability` | Grafana LGTM + the standalone OpenTelemetry (OTel) Collector |
 
 ## Config is all env vars; overlays do the rest
 
@@ -75,8 +75,8 @@ pick: evaluate on the left, run production on the right.
 | **Envoy `ext_authz` forwarding** | — | decision only (no L7 proxy) | ✅ `SecurityPolicy.extAuth` forwards on allow |
 | **OIDC workforce identity** | — | optional (set `OIDC_*`) | ✅ (any OIDC IdP — e.g. Dex, Logto, Okta, Entra ID) |
 | **OPA org veto** | — | inline policy only | ✅ `OPA_URL` deny-overrides bundle |
-| **Regulated egress / needs-approval (TBAC)** | simulated | ✅ real agent-idp delegation check | ✅ |
-| **Cryptographic agent identity (VC mode)** | — | header-trust (`AGENT_IDENTITY_MODE=header`) | ✅ `egress-identity-vc` (VP required) |
+| **Regulated egress / needs-approval (task-based access control, TBAC)** | simulated | ✅ real agent-idp delegation check | ✅ |
+| **Cryptographic agent identity (Verifiable Credential, VC, mode)** | — | header-trust (`AGENT_IDENTITY_MODE=header`) | ✅ `egress-identity-vc` (verifiable presentation, VP, required) |
 | **Network-enforced egress (proxy-only netpol)** | — | — | ✅ `egress-enforcement` + sidecar + admission |
 | **Durable Postgres state** | — | ✅ (one instance, two DBs) | ✅ CloudNativePG (HA) |
 | **High availability** | — | — | ✅ HA control plane + autoscale pool |
@@ -98,6 +98,6 @@ then graduate via the runbook against whichever cluster you run.
 5. [Persistence](/docs/operations/persistence/) — pluggable registry + agent-idp backends (memory/postgres/mysql/sqlite/mongodb), CloudNativePG.
 6. [Credential-safe action enforcement (ops)](/docs/operations/egress-enforcement-ops/) — the forward-proxy, proxy-only NetworkPolicies, the admission webhook, the Envoy egress gateway.
 7. [Terraform / DOKS](/docs/operations/terraform-doks/) — one **optional** provisioning example (DigitalOcean); PaloNexus runs on any Kubernetes.
-8. [Zero to authority-bound agent runbook](/docs/operations/doks-runbook/) — the cluster-agnostic cold-start path (kind/EKS/GKE/DOKS; DOKS is the worked example): cluster → Gateway/Envoy CRDs → `kubectl apply -k` → seed → deploy an authority-bound agent → verify allow/deny/needs-approval in ≤30 min.
+8. [Zero to authority-bound agent runbook](/docs/operations/doks-runbook/) — the cluster-agnostic cold-start path (kind/EKS/GKE/DOKS; DOKS is the worked example): cluster → Gateway/Envoy Custom Resource Definitions (CRDs) → `kubectl apply -k` → seed → deploy an authority-bound agent → verify allow/deny/needs-approval in ≤30 min.
 9. [Observability](/docs/operations/observability/) — Grafana LGTM, the OTel collector, the overview dashboard, DID/VC traces.
 10. [Performance](/docs/operations/performance/) — the egress-decision benchmark (~2.9µs, `make bench-egress`), per-stage latency, and the live-p99 method.

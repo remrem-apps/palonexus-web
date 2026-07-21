@@ -10,7 +10,10 @@ to know exactly which `X-Palonexus-*` headers to send, which ones you'll get bac
 each is trusted. It's the definitive header contract for both the ingress and egress decision
 paths.
 
-The `/authz` decision is shaped by — and produces — a small set of headers. The
+The `/authz` decision is shaped by — and produces — a small set of headers. Three
+acronyms recur in the tables below: a verifiable presentation (VP) is the agent's signed
+wrapper around its issuer-signed Verifiable Credential (VC), and task-based access
+control (TBAC) is the delegation model that scopes access to one task. The
 primary path is **agent egress** — *may this agent make this call, on behalf of this
 human, for this task, right now?* — and the presence of `X-Palonexus-Actor` is what
 selects it. Without `X-Palonexus-Actor`, the *same* endpoint serves the foundational

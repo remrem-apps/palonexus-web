@@ -13,8 +13,8 @@ fair question for any evaluator is: **does governing every outbound call slow ag
 — roughly **350,000 decisions/sec per core** — and is flat across allow, deny, needs-approval,
 and regulated-allow verdicts. That is 3–4 orders of magnitude cheaper than the network calls it
 governs (an LLM call is tens-to-hundreds of ms), so the decision cannot be the bottleneck. The
-only latency that matters comes from the *optional* network hops the decision makes (OPA veto,
-agent-idp delegation check) and VP crypto — isolated and bounded below.
+only latency that matters comes from the *optional* network hops the decision makes (the Open
+Policy Agent (OPA) veto, the agent-idp delegation check) and verifiable-presentation (VP) crypto — isolated and bounded below.
 
 ## Tier 1 — decision micro-benchmark (hermetic, reproducible)
 
@@ -51,7 +51,7 @@ so you can see *which* stage costs time directly in Grafana:
 
 | `stage` | Covers | Typical cost |
 |---|---|---|
-| `identity` | token verify (header/JWKS) + optional VP Ed25519 verify | µs (header) — sub-ms (VP crypto) |
+| `identity` | token verify (header / JSON Web Key Set, JWKS) + optional VP Ed25519 verify | µs (header) — sub-ms (VP crypto) |
 | `registry` | caller + target lookups | µs (in-memory) |
 | `policy` | allowlist + budget + **delegation** + OPA | µs in-process; **ms when the delegation/OPA network hop is wired** |
 
@@ -62,7 +62,7 @@ This answers "did the delegation check cost the decision?" without guesswork.
 
 Tier 1 proves the logic is cheap; Tier 2 validates the real HTTP server under concurrency and
 confirms the `palonexus_authz_duration_seconds` histogram. Run against the built binary (the dev
-overlay = OIDC off = a clean control-plane-only number):
+overlay = OpenID Connect (OIDC) sign-in off = a clean control-plane-only number):
 
 ```bash
 make build && ./bin/control-plane &      # :9191 decision plane

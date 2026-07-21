@@ -61,20 +61,21 @@ keep it — PaloNexus sits on the authorization edge, not the inference path. Se
 
 ## Not a Kubernetes operator
 
-Kubernetes-native agent operations — declarative agent CRDs, sandbox lifecycle CRDs,
-warm pools, node-level isolation — are owned by projects like kagent and Agent Sandbox,
-backed by cloud-native communities. PaloNexus *deploys on* Kubernetes and ships an Envoy
-`ext_authz` integration and network-layer egress enforcement as **one enforcement
-adapter**, but Kubernetes is a deployment target, not the product's identity. The same
+Kubernetes-native agent operations — declarative agent Custom Resource Definitions (CRDs),
+sandbox lifecycle CRDs, warm pools, node-level isolation — are owned by projects like kagent and Agent Sandbox,
+backed by cloud-native communities. PaloNexus *deploys on* Kubernetes and ships an
+integration with Envoy's external-authorization hook (`ext_authz`) and network-layer
+egress enforcement as **one enforcement adapter**, but Kubernetes is a deployment target, not the product's identity. The same
 authorization decision is reachable from an SDK adapter with no cluster at all. See
 [Credential-safe action enforcement](/docs/develop/egress-enforcement/) for the Kubernetes mechanics.
 
 ## Not a workforce-IdP replacement
 
-Your workforce identity provider — Okta, Entra ID, Google Workspace, Keycloak, Logto —
+Your workforce identity provider (IdP) — Okta, Entra ID, Google Workspace, Keycloak, Logto —
 remains the source of truth for *humans*: who exists, what role they hold, whether they are
 still employed. PaloNexus never re-invents human identity. It connects to your IdP over
-OIDC and SCIM, and extends it downward to agents: every agent is bound to an accountable
+OpenID Connect (OIDC) and SCIM (System for Cross-domain Identity Management), and extends
+it downward to agents: every agent is bound to an accountable
 human owner from that directory, and joiner/mover/leaver changes in the IdP cascade into
 agent access and delegation revocation. See
 [IdP support model](/docs/concepts/enterprise-iam/#idp-support-model) and

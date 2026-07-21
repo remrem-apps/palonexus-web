@@ -6,7 +6,8 @@ sidebar:
 ---
 
 `agentdid` is the cryptographic foundation for **AgentDIDs + Verifiable
-Credentials** on PaloNexus. It is a stand-alone, src-layout Python package
+Credentials** on PaloNexus — Decentralized Identifiers (DIDs) and Verifiable
+Credentials (VCs) scoped to agent workloads. It is a stand-alone, src-layout Python package
 (`agentdid/`) with no platform dependencies, imported by agent-idp, the agents,
 and `runbooks-api`. All crypto is real and tested (47 tests, no network).
 
@@ -167,7 +168,7 @@ ok = verify_challenge(resp, agent_did, resolver,
 |---|---|
 | `is_revoked(vc_id, status_url, *, fetch=None) -> bool` | Is the VC `jti` revoked per the StatusList at `status_url`? `fetch` is an injectable `url -> dict` (tests); it defaults to an httpx GET. **A missing list or fetch error → not revoked** (fail-open for demo availability). |
 
-The IdP serves `GET /status/{list_id}` in one of two shapes (both accepted):
+The identity provider (IdP) serves `GET /status/{list_id}` in one of two shapes (both accepted):
 
 ```json
 { "revoked": ["<vc_jti>", "<vc_jti>"] }

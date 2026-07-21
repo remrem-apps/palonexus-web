@@ -6,13 +6,14 @@ sidebar:
 ---
 
 Deploy the whole control layer — gateway, control plane, identity (Dex +
-agent-idp), policy (OPA), model broker, the demo agents, observability (Grafana
-LGTM), and the portal — with one `kubectl apply -k`. Local **kind** is the
-primary target; **DOKS** is one command via [Terraform](/docs/operations/terraform-doks/).
+agent-idp), policy (Open Policy Agent, OPA), model broker, the demo agents, observability
+(the Grafana LGTM stack — Loki, Grafana, Tempo, Mimir), and the portal — with one
+`kubectl apply -k`. Local **kind** is the primary target; **DigitalOcean Kubernetes
+(DOKS)** is one command via [Terraform](/docs/operations/terraform-doks/).
 
 ## Prerequisites (once per cluster)
 
-The gateway pillar depends on the **Gateway API CRDs** and **Envoy Gateway** (the
+The gateway pillar depends on the **Gateway API CRDs** (Custom Resource Definitions) and **Envoy Gateway** (the
 `GatewayClass` controller that implements `SecurityPolicy.extAuth` — the
 enforcement point that routes every request through `/authz`):
 
@@ -27,7 +28,7 @@ helm install eg oci://docker.io/envoyproxy/gateway-helm --version v1.1.0 \
 
 You also need `kubectl` + `kustomize` (or `kubectl kustomize`), Docker/Podman, and
 a cluster (kind/minikube/k3d locally, or DOKS). If you enable the `postgres`
-component, install the [CloudNativePG](https://cloudnative-pg.io) operator first
+component, install the [CloudNativePG](https://cloudnative-pg.io) (CNPG) operator first
 (see [Persistence](/docs/operations/persistence/)).
 
 ## Render with `LoadRestrictionsNone`
@@ -72,7 +73,7 @@ deploy/kustomize/
 | Overlay | Use | Notable behaviour |
 |---|---|---|
 | `dev` | local cluster (kind/minikube/k3d) | pins the locally-built `palonexus/control-plane:dev`; **strips the three `OIDC_*` env vars** → anonymous passthrough (policy still enforces public-vs-private) |
-| `kind` | single-node kind / live demo | dev behaviour + numeric UIDs for restricted PSS, `replicas: 1`, adds the `echo` demo backend. Note kind's default CNI (kindnet) does **not** enforce NetworkPolicy — the egress lockdown is advisory there; the `/authz` gate still enforces |
+| `kind` | single-node kind / live demo | dev behaviour + numeric UIDs for restricted Pod Security Standards (PSS), `replicas: 1`, adds the `echo` demo backend. Note kind's default CNI (kindnet) does **not** enforce NetworkPolicy — the egress lockdown is advisory there; the `/authz` gate still enforces |
 | `selfhost` | your cluster (DOKS/EKS/GKE/on-prem) | cluster-agnostic; defaults images to `ghcr.io/palonexus/*:dev`; anonymous-passthrough egress; the place you turn on the hardening **components** |
 
 The dev/kind/selfhost overlays all strip the same three env entries (`OIDC_ISSUER`,
@@ -81,9 +82,10 @@ everywhere — only the overlay differs.
 
 :::note[Wire your own IdP for production]
 Anonymous passthrough is fine for evaluation, but production should verify human
-identity against your workforce IdP. Enable the `oidc` component (below) to point the
+identity against your workforce identity provider (IdP). Enable the `oidc` component (below) to point the
 control plane at **your** issuer — **Logto** (the first supported IdP), Okta, Entra ID, or
-any OIDC provider. Agent *egress* identity (DID/VC) is independent and already on. Full
+any OpenID Connect (OIDC) provider. Agent *egress* identity (Decentralized Identifier /
+Verifiable Credential, DID/VC) is independent and already on. Full
 steps: [Bring your own IdP](/docs/operations/bring-your-own-idp/).
 :::
 
@@ -106,11 +108,11 @@ components:
 
 | Component | What it does |
 |---|---|
-| `postgres` | provisions two CloudNativePG `Cluster`s (one per component) and wires the DSN from the generated `*-app` secret. Requires the CNPG operator. → [Persistence](/docs/operations/persistence/) |
-| `egress-identity-vc` | sets `AGENT_IDENTITY_MODE=vc`: every agent egress call must carry a verified Verifiable Presentation; the spoofable `X-Palonexus-Actor` header is no longer trusted alone |
+| `postgres` | provisions two CloudNativePG `Cluster`s (one per component) and wires the data source name (DSN) from the generated `*-app` secret. Requires the CNPG operator. → [Persistence](/docs/operations/persistence/) |
+| `egress-identity-vc` | sets `AGENT_IDENTITY_MODE=vc`: every agent egress call must carry a verified Verifiable Presentation (VP); the spoofable `X-Palonexus-Actor` header is no longer trusted alone |
 | `egress-enforcement` | the floor: control-plane exposes the `egress-proxy` (pod port `9092`, Service alias `:80`); agents get `HTTPS_PROXY`/`HTTP_PROXY` pointing at it; egress NetworkPolicies flip to **proxy-only** |
 | `egress-sidecar` | adds a localhost `egress-sidecar` to each agent pod so `langchain_openai`'s `base_url` (which it can't strip) routes through the proxy; mints a fresh long-TTL (12h) revocable VP per request. **Pair with `egress-enforcement`** |
-| `egress-gateway` | optional transparent Envoy forward-proxy (`egress-gw.apps.svc:3128`) deciding every call via the `ext_authz` filter — the egress mirror of the ingress keystone |
+| `egress-gateway` | optional transparent Envoy forward-proxy (`egress-gw.apps.svc:3128`) deciding every call via Envoy's external-authorization (`ext_authz`) filter — the egress mirror of the ingress keystone |
 | `agent-admission` | mutating + validating webhook: injects the proxy env at admission and **rejects** agent pods whose agent isn't registered+provisioned at the IdP. Self-contained TLS-bootstrap Job (no cert-manager) |
 | `oidc` | wires your enterprise IdP (Logto first-supported / Okta / Entra / any OIDC) as human sign-in — re-adds `OIDC_ISSUER`/`OIDC_JWKS_URL`/`OIDC_AUDIENCE` pointing at your issuer. **Enabling it requires deleting the anonymous-passthrough strip patch** (they conflict). → [Bring your own IdP](/docs/operations/bring-your-own-idp/) |
 

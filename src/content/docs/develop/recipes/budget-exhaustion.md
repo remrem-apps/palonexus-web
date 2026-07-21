@@ -15,7 +15,10 @@ the model-broker's usage reports), so it is not modeled by the offline `FakeCont
 ## Handle the deny (runs offline)
 
 The deny-handling shape is identical for *any* hard refusal, so you write and test it offline.
-Here the seeded negative persona **Claire Evans** is hard-denied; in production `call budget
+Here **Claire Evans** — the seeded no-access persona of the Northstar demo scenario — is
+hard-denied on `INC-4821`, the sample incident from the
+[temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/);
+in production `call budget
 exceeded` arrives through the very same `except PolicyDenied` branch:
 
 ```python

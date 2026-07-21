@@ -33,16 +33,16 @@ Dev = policy/identity wiring) per the platform's working model.
 
 | ✓ | # | Harden | Owner | How | Enforces |
 |---|---|---|---|---|---|
-| ☐ | 1 | **OIDC on** (human auth) | Ops + Dev | Set `OIDC_ISSUER`, `OIDC_AUDIENCE`, `OIDC_JWKS_URL` on the control-plane (the dev/kind/selfhost overlays **strip** these → anonymous). Restore them for real human identity. | deny-by-default for ingress |
-| ☐ | 2 | **Cryptographic agent identity** | Dev | `AGENT_IDENTITY_MODE=vc` (component `egress-identity-vc`): every agent egress must carry a verified Membership [VP](/docs/getting-started/glossary/#vp); the spoofable `X-Palonexus-Actor` header is no longer trusted alone. | identity propagation, not header-trust |
-| ☐ | 3 | **OPA org veto** | Dev | Set `OPA_URL` so the inline allow is subject to the org Rego bundle (`policy/rego/authz.rego`, deny-overrides). Unreachable OPA **fails closed**. | policy is deny-overrides |
+| ☐ | 1 | **OIDC on** (human auth) | Ops + Dev | Set the OpenID Connect (OIDC) vars `OIDC_ISSUER`, `OIDC_AUDIENCE`, `OIDC_JWKS_URL` on the control-plane (the dev/kind/selfhost overlays **strip** these → anonymous). Restore them for real human identity. | deny-by-default for ingress |
+| ☐ | 2 | **Cryptographic agent identity** | Dev | `AGENT_IDENTITY_MODE=vc` (component `egress-identity-vc`): every agent egress must carry a verified Membership [VP](/docs/getting-started/glossary/#vp) (verifiable presentation); the spoofable `X-Palonexus-Actor` header is no longer trusted alone. | identity propagation, not header-trust |
+| ☐ | 3 | **OPA org veto** | Dev | Set `OPA_URL` so the inline allow is subject to the Open Policy Agent (OPA) org Rego bundle (`policy/rego/authz.rego`, deny-overrides). Unreachable OPA **fails closed**. | policy is deny-overrides |
 | ☐ | 4 | **Egress enforced at the network** | Ops | Component `egress-enforcement`: agents get `HTTPS_PROXY`/`HTTP_PROXY` at the proxy and egress NetworkPolicies flip to **proxy-only** (DNS + agent-idp + the proxy, nothing else). | every egress through `/authz` |
 | ☐ | 5 | **langchain model-egress closed** | Ops + Dev | Component `egress-sidecar` (pair with #4): a localhost sidecar carries a fresh, revocable VP for `langchain_openai`, which strips proxy env. | no un-governed model calls |
 | ☐ | 6 | **Admission guarantees the wiring** | Ops | Component `agent-admission`: a webhook injects the proxy env and **rejects** pods whose agent isn't registered + provisioned at agent-idp. | no un-provisioned agents run |
-| ☐ | 7 | **Durable, shared state** | Ops | Component `postgres` (+ CNPG operator): `REGISTRY_BACKEND=postgres` / `IDP_STORE_BACKEND=postgres`. In-memory is per-replica and lost on restart — and revocation must survive. | revocation/registrations survive restarts |
+| ☐ | 7 | **Durable, shared state** | Ops | Component `postgres` (+ the CloudNativePG, CNPG, operator): `REGISTRY_BACKEND=postgres` / `IDP_STORE_BACKEND=postgres`. In-memory is per-replica and lost on restart — and revocation must survive. | revocation/registrations survive restarts |
 | ☐ | 8 | **Audit retention** | Ops | Ship the hash-chained audit to durable storage with a retention window (Loki retention / object-storage lifecycle). | tamper-evident audit, kept |
 | ☐ | 9 | **Backups + restore drill** | Ops + QA | Schedule CNPG backups; run the [restore drill](/docs/operations/backups/) so `verify_chain()` passes on restored data. | provable recovery |
-| ☐ | 10 | **mTLS on the data path** | Ops | Run the decision/egress path mesh-only (the two-listener split lets you lock `:9191` to mesh and expose `:8181` separately); add mTLS via your mesh (Envoy/Istio/Linkerd). | edge-trust, no token re-parsing |
+| ☐ | 10 | **mTLS on the data path** | Ops | Run the decision/egress path mesh-only (the two-listener split lets you lock `:9191` to mesh and expose `:8181` separately); add mutual TLS (mTLS) via your mesh (Envoy/Istio/Linkerd). | edge-trust, no token re-parsing |
 | ☐ | 11 | **Rate limits** | Ops + Dev | Apply per-agent **budgets** (`callsPerHour`/`tokensPerHour` on the registry entry) and gateway-level rate limits via Envoy `SecurityPolicy`. | contain runaway loops ([budget recipe](/docs/develop/recipes/budget-exhaustion/)) |
 | ☐ | 12 | **Restricted PSS + numeric UIDs** | Ops | Run under the restricted Pod Security Standard (the `kind` overlay's numeric-UID pattern); non-root, read-only rootfs where possible. | least-privilege workloads |
 | ☐ | 13 | **Secrets out-of-band** | Ops | No secret in an image; deliver via External Secrets / sealed-secrets; keep the **issuer key stable**. | [Secrets](/docs/operations/secrets/) |
@@ -66,7 +66,7 @@ hardened cluster you should be able to *produce* `verified agent credential requ
 `agent identity required`, and `opa unavailable` on demand, proving each gate is live.
 
 :::note[kind caveat]
-kind's default CNI does **not** enforce NetworkPolicy, so #4's lockdown is advisory there — the
+kind's default Container Network Interface (CNI) plugin does **not** enforce NetworkPolicy, so #4's lockdown is advisory there — the
 `/authz` gate still enforces, but use a NetworkPolicy-enforcing CNI in production.
 :::
 

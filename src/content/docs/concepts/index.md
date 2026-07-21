@@ -5,7 +5,7 @@ sidebar:
   order: 1
 ---
 
-PaloNexus connects every agent action to an accountable human or service owner, verifies that the delegation is valid, issues narrowly scoped runtime credentials, and enforces that authority when an agent calls a model, tool, application programming interface, sandbox, or another agent.
+PaloNexus connects every agent action to an accountable human or service owner, verifies that the delegation is valid, issues narrowly scoped runtime credentials, and enforces that authority when an agent calls a model, tool, API, sandbox, or another agent.
 
 Agent runtimes decide *how an agent works*. Sandboxes decide *where its code runs*.
 **PaloNexus decides what an agent is authorized to do and whose authority it is using.**
@@ -47,8 +47,8 @@ trail. Every **deny** is a link in that chain failing.
 | **Lifecycle-linked revocation** | Human and organizational changes cascade immediately into agent access and ownership state. |
 | **Verifiable authority trail** | Every action can be traced from the agent to the task, delegation, approver, policy, runtime credential, and target outcome. |
 
-Network enforcement, signed credentials, Decentralized Identifiers, Verifiable
-Credentials, Open Policy Agent, Envoy, and Kubernetes are **implementation mechanisms
+Network enforcement, signed credentials, Decentralized Identifiers (DIDs), Verifiable
+Credentials (VCs), Open Policy Agent (OPA), Envoy, and Kubernetes are **implementation mechanisms
 beneath these pillars** — the how, not the product.
 
 ## Three enforcement modes
@@ -59,7 +59,7 @@ designed around three enforcement modes:
 | Mode | How it works | Status |
 |---|---|---|
 | **Governed tool** | PaloNexus hosts or wraps a tool; credentials never reach the agent. | SDK governed-tool adapters (LangChain / LangGraph / Deep Agents) work today; a hosted tool gateway is planned. |
-| **Token exchange** | PaloNexus issues an ephemeral, scoped token to a trusted runtime component. | The STS in `agent-idp` ships today (short-lived, audience-bound runtime credentials); downstream cloud/SaaS connectors are planned. |
+| **Token exchange** | PaloNexus issues an ephemeral, scoped token to a trusted runtime component. | The Security Token Service (STS) in `agent-idp` ships today (short-lived, audience-bound runtime credentials); downstream cloud/SaaS connectors are planned. |
 | **Egress gateway** | The agent makes an outbound request through PaloNexus, which authorizes it and injects credentials after the untrusted boundary. | **Shipped — today's primary enforcement.** The Kubernetes egress proxy/gateway below is one implementation of this mode. |
 
 Today's shipped enforcement is **mode 3 (the egress gateway)** plus the SDK adapters;
@@ -83,8 +83,10 @@ PaloNexus authorization service
         +-- cloud credential broker                                 planned
 ```
 
-**Working today:** the SDK adapters, Envoy `ext_authz` (ingress and egress), and the
-Kubernetes network-layer egress enforcement. **Planned, not yet built:** the MCP
+**Working today:** the SDK adapters, Envoy's external-authorization hook (`ext_authz`,
+ingress and egress), and the
+Kubernetes network-layer egress enforcement. **Planned, not yet built:** the Model
+Context Protocol (MCP)
 gateway, dedicated sandbox-egress adapters, and the cloud credential broker.
 
 ## Implementation mechanisms: one decision point
@@ -105,10 +107,10 @@ the foundation egress is built on, not the headline.
 | Mechanism | What it is here | Kubernetes object(s) |
 |---|---|---|
 | **Gateway** | L7 edge routing; the enforcement point that routes every request through `/authz` | `GatewayClass` / `Gateway` / `HTTPRoute` (Gateway API), implemented by **Envoy Gateway** + `SecurityPolicy.extAuth` |
-| **Identity** | **human** SSO (OIDC/JWT) **+** **agent** identity (DID/VC is the supported credential format) | **Dex** for human OIDC; **agent-idp** issues each agent a `did:key` under a `did:web` org anchor |
+| **Identity** | **human** SSO via OpenID Connect (OIDC) JSON Web Tokens (JWTs) **+** **agent** identity (DID/VC is the supported credential format) | **Dex** for human OIDC; **agent-idp** issues each agent a `did:key` under a `did:web` org anchor |
 | **Registry** | source of truth for services, upstreams, scopes, agent allowlists, budgets | control-plane `/v1/registry/services` API |
 | **Policy** | the allow/deny decision | inline rules in the control plane **+** **OPA** for org-wide Rego (deny-overrides) |
-| **Observability** | metrics + traces | control-plane `/metrics`; **OTel Collector** → Prometheus / Tempo / Loki (Grafana LGTM) |
+| **Observability** | metrics + traces | control-plane `/metrics`; **OpenTelemetry (OTel) Collector** → Prometheus / Tempo / Loki (the Grafana LGTM observability bundle) |
 | **Audit** | the verifiable authority trail (hash-chained, tamper-evident) | hash-chained JSON records (`/v1/audit`) |
 
 ## The request flow
@@ -147,7 +149,7 @@ ordinary north-south **ingress**, the foundation it is built on.
 
 - **Egress** answers *may THIS agent, acting for THIS user on THIS task, reach THIS
   target right now?* — it resolves both the calling agent and the target from the
-  registry, then runs an **allowlist → budget → delegation (TBAC) → OPA** decision.
+  registry, then runs an **allowlist → budget → delegation (task-based access control, TBAC) → OPA** decision.
   Agent identity is proven cryptographically (a Verifiable Presentation), not taken
   from a header. See [Credential-Safe Action Enforcement](/docs/concepts/egress-enforcement/) and
   [Agent identity & credentials](/docs/concepts/identity-and-credentials/).

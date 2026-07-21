@@ -7,7 +7,7 @@ sidebar:
 
 This section is the developer's path: take a LangChain/LangGraph agent and run it
 as a **governed workload** on PaloNexus, where **every outbound action it takes** —
-a model call, a tool call, an agent-to-agent hop, an external request — is decided
+a model call, a tool call, an agent-to-agent (A2A) hop, an external request — is decided
 at one deny-by-default `/authz` answering *may this agent make this call, on behalf
 of this human, for this task, right now?* That **agent egress governance is the real
 work**; the *same* decision point also governs north-south traffic, the foundation it
@@ -39,7 +39,7 @@ user, actor = agent, on task T).
 
 The in-process middleware is the *ergonomic* path, but the *guarantee* is that
 agent pods are NetworkPolicy-confined to reach only the **egress forward-proxy**.
-The proxy proves identity from a Membership **Verifiable Presentation** and runs
+The proxy proves identity from a Membership **Verifiable Presentation** (VP) and runs
 the same egress decision before forwarding a single byte. A raw `curl` with no VP
 is denied (`407`). So even a non-cooperating framework — or a compromised one —
 cannot reach a model/tool/peer/external host except through `/authz`.
@@ -57,8 +57,8 @@ agent middleware mirrors this: any non-`200`, or an unreachable `/authz`, denies
 ### Cryptographic identity, not a trusted header
 
 With `AGENT_IDENTITY_MODE=vc` the actor is the *proven*, registry-bound `did:key`
-behind a non-revoked Membership VC — the `X-Palonexus-Actor` header is trusted
-only if it matches. Revoking the Membership VC cuts egress on the next call. See
+behind a non-revoked Membership Verifiable Credential (VC) — the `X-Palonexus-Actor`
+header is trusted only if it matches. Revoking the Membership VC cuts egress on the next call. See
 [Accountable agent identity](/docs/develop/agent-identity/).
 
 ### Never put a provider key in an agent pod
@@ -90,7 +90,7 @@ every hop decided at `/authz`.
 
 - [Deploy an agent](/docs/develop/deploy-an-agent/) — package, deploy, register.
 - [Credential-safe action enforcement](/docs/develop/egress-enforcement/) — the developer view of the sidecar + proxy.
-- [Accountable agent identity](/docs/develop/agent-identity/) — DID/VC self-provisioning.
+- [Accountable agent identity](/docs/develop/agent-identity/) — decentralized identifier (DID) / VC self-provisioning.
 - [Authority delegation](/docs/develop/delegations-and-approvals/) — human-in-the-loop.
 - [Autonomous flow](/docs/develop/autonomous-flow/) — the end-to-end hero flow.
 - [Budgets and allowlists](/docs/develop/budgets-and-allowlists/) — registry-level controls.

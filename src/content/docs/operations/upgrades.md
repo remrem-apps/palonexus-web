@@ -19,7 +19,7 @@ versioned HTTP contracts; keep them within one minor of each other and upgrade i
 | control-plane ↔ agent-idp | `/v1/agents/verify-presentation`, `/v1/delegations/check`, `/v1/revoke` | Upgrade **agent-idp first** (it's the dependency the control plane calls). New idp must keep serving the old endpoints. |
 | control-plane ↔ SDK | `/authz`, `/v1/registry/*`, `/v1/audit/*` | SDK tolerates older control-planes for read paths; upgrade the **control-plane before** relying on a new SDK feature. |
 | agent-idp ↔ SDK | `/v1/governance/agents`, `/v1/delegations/*`, `/v1/revocation/cascade` | Upgrade **agent-idp before** the SDK uses a new governance/delegation field. |
-| agent-idp ↔ issuer key | VC signatures | The issuer key is **independent of version** — never rotate it as part of a code upgrade (see [Secrets](/docs/operations/secrets/)). |
+| agent-idp ↔ issuer key | Verifiable Credential (VC) signatures | The issuer key is **independent of version** — never rotate it as part of a code upgrade (see [Secrets](/docs/operations/secrets/)). |
 
 General rule: **dependencies first** — agent-idp → control-plane → SDK/agents. Each new version
 keeps serving the previous wire contract for one minor, so a brief version skew during the roll is
@@ -37,7 +37,7 @@ roll back *to* the prior tag in the same row.
 |---|---|---|---|---|
 | `control-plane` | `:h13` | `:h11` → `:h4` | agent-idp, portal | the decision engine; upgrade **after** agent-idp |
 | `agent-idp` | `:h13` | `:h11` → `:h8` | control-plane | the dependency — upgrade **first**; keeps the old endpoints |
-| `portal` | `:h13` | `:h11` → `:h10` | control-plane | operator console + BFF; carries the optional demo-seed tooling (`SEED_LOGTO_DIR`/`SEED_LOGTO_PYTHON`) since `:h11` |
+| `portal` | `:h13` | `:h11` → `:h10` | control-plane | operator console + backend-for-frontend (BFF); carries the optional demo-seed tooling (`SEED_LOGTO_DIR`/`SEED_LOGTO_PYTHON`) since `:h11` |
 | `remediation` (agent runtime) | `:h12` | `:h6` | — (independent) | pure-Python agent; carries the async-gate fix in `palonexus_agent`. Other demo agents track the same package |
 | `model-broker` | `:dev` | — | — | unchanged across the recent waves (no code delta) |
 

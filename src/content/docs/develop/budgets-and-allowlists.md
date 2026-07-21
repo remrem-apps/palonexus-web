@@ -75,7 +75,9 @@ a key in the pod.
 ## Tool and model entries
 
 The targets an agent reaches are themselves registry entries. Their `dataClass`
-decides whether a human-approved delegation is also required:
+decides whether a human-approved delegation is also required — in the first example
+below, the tool carries its own server-side DID/VC (decentralized identifier /
+Verifiable Credential) gate:
 
 ```bash
 # A tool with a server-side DID/VC gate -> internal (allowlist at the proxy,
@@ -108,8 +110,8 @@ curl -s localhost:8181/metrics | grep -E 'palonexus_(token_usage|agent_cost)'
 ```
 
 For the complete Service schema and the egress decision order (allowlist → budget →
-delegation/TBAC → OPA) see the
+delegation / task-based access control (TBAC) → OPA, the Open Policy Agent) see the
 [HTTP API reference](/docs/reference/http-api/). In production, drive these entries
-from a GitOps reconciler or `Agent` CRDs rather than `curl`; the per-agent
+from a GitOps reconciler or `Agent` custom resource definitions (CRDs) rather than `curl`; the per-agent
 `register-services.sh` template is the starting point —
 [Deploy an agent](/docs/develop/deploy-an-agent/#4-register-the-agent-and-its-egress-allowlist).

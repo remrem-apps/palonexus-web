@@ -6,8 +6,8 @@ sidebar:
 ---
 
 `palonexus.langgraph` governs a LangGraph node with one decorator. `governed_node(pn, …)`
-wraps a node so it runs **only if** `/authz` allows, and reproduces the
-`incident-triage` flow — deny → `interrupt()` → approve → re-read — with the boilerplate
+wraps a node so it runs **only if** `/authz` allows, and reproduces the flow of the
+`incident-triage` demo agent — deny → `interrupt()` → approve → re-read — with the boilerplate
 removed:
 
 - **allow** → the wrapped node runs;
@@ -19,7 +19,7 @@ removed:
 
 ## The HITL cycle
 
-The sequence below traces the needs-approval path end to end. The node asks `/authz` *before*
+The sequence below traces the human-in-the-loop (HITL) needs-approval path end to end. The node asks `/authz` *before*
 running; on a needs-approval verdict it auto-starts the `request_delegation` flow and
 `interrupt()`s, which checkpoints the graph and returns control to your caller. A human approves
 out of band; resuming with `Command(resume=…)` re-enters the node, which **re-checks** `/authz`
@@ -106,7 +106,9 @@ task_id=…) as _:`.
 ## Full HITL flow, offline
 
 This is the shipped `examples/langgraph_runbook_hitl.py`, runnable with no network. It walks
-the complete deny → interrupt → approve → resume cycle with the **devops-incident** personas.
+the complete deny → interrupt → approve → resume cycle with the personas of
+**devops-incident**, the demo scenario used throughout these docs — Ethan Park (the agent's
+owner) and Maya Chen (the approver) — working `INC-4821`, the docs' sample incident.
 
 ```python
 from langgraph.checkpoint.memory import MemorySaver

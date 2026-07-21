@@ -23,7 +23,7 @@ decision** as `/authz`, and only then forwards — plaintext via a reverse-proxy
 TLS via a `CONNECT` tunnel (TLS stays end-to-end; the proxy never sees plaintext).
 
 The proxy is **only started when `AGENT_IDP_URL` is set** — identity comes from a
-Membership VP that the agent-idp verifies (`POST /v1/agents/verify-presentation`),
+Membership verifiable presentation (VP) that the agent-idp verifies (`POST /v1/agents/verify-presentation`),
 and without that verifier no sound allow is possible. Decisions are recorded as
 `egress.proxy` audit rows (`actor=<agent>`, `service=<target>`, `allow=…`) in the
 hash chain, with **deny-by-default**: a target not in the agent's registry
@@ -106,7 +106,7 @@ namespace `apps` and pods labelled `palonexus.io/agent=true`:
 - **Validate (`/validate`)** — resolve the agent name (env `PALONEXUS_AGENT_NAME`
   or label `palonexus.io/agent-name`) and call the agent-idp
   `GET /v1/agents/{name}`. Missing (404) or `provisioned != true` → **admission
-  DENIED**. IdP unreachable → fail-open with a warning (a transient IdP outage
+  DENIED**. Identity provider (IdP) unreachable → fail-open with a warning (a transient IdP outage
   must not block all agent scheduling). `failurePolicy: Fail` (webhook-server down
   → reject).
 
@@ -121,7 +121,7 @@ webhook configs' `caBundle` (no cert-manager required).
 
 `components/egress-gateway` is the "proper data plane" alternative: a dedicated
 Envoy forward proxy in `apps` (`egress-gw.apps.svc:3128`) that decides every
-outbound call at the control-plane `/authz` via the **ext_authz HTTP filter** —
+outbound call at the control-plane `/authz` via **Envoy's external-authorization (`ext_authz`) HTTP filter** —
 the egress mirror of the ingress `SecurityPolicy.extAuth` keystone — and forwards
 to any resolved host via a `dynamic_forward_proxy` (DNS) cluster. A non-200 from
 `/authz` is a hard deny (fail-closed).
@@ -145,7 +145,7 @@ wins.
 | Mode | Behaviour |
 |---|---|
 | `header` *(default, demo)* | trust `X-Palonexus-Actor`; verify the VP if one is present (defence-in-depth) but don't require it |
-| `vc` *(production)* | a verified `X-Palonexus-Agent-VP` is **required** — missing/invalid VP, or an actor-name mismatch, denies. Revoking the agent's Membership VC instantly cuts egress |
+| `vc` *(production)* | a verified `X-Palonexus-Agent-VP` is **required** — missing/invalid VP, or an actor-name mismatch, denies. Revoking the agent's Membership Verifiable Credential (VC) instantly cuts egress |
 
 `vc` is set by the `egress-identity-vc` component. In `vc` mode, raw header-only
 callers (e.g. `scripts/demo.sh`) are denied **by design** — flip back for the
