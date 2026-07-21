@@ -15,7 +15,7 @@ see the [Deep Agents / LangChain adapters](/docs/integrations/deep-agents-sandbo
 > **MCP standardizes how agents reach tools. PaloNexus would decide whose authority each
 > tool call carries.**
 
-The Model Context Protocol is becoming the common wire format between agents and tools:
+The Model Context Protocol (MCP) is becoming the common wire format between agents and tools:
 one client, many servers, uniform tool discovery and invocation. That uniformity is also
 the governance opportunity — and the risk. An MCP server typically holds its own
 credentials for the system behind it, and any agent that can reach the server can exercise

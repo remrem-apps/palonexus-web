@@ -13,7 +13,8 @@ the privileged read succeeds for one task, and every hop is recorded on a tamper
 chain — then access returns to zero.
 
 Every Python snippet on this page runs against `PaloNexus.offline()` — no cluster, no network —
-using the real Northstar seed personas (no invented users). It is the doctest-trimmed companion
+using the real Northstar seed personas (Northstar Corp is the fictional demo
+organization; no invented users). It is the doctest-trimmed companion
 to the [Quickstart](/docs/getting-started/quickstart/), the [LangGraph adapter](/docs/sdk/langgraph/),
 and [Authority delegation](/docs/develop/delegations-and-approvals/).
 
@@ -25,7 +26,7 @@ and the elevation is a named human decision, on the record.
 
 ## Demo narrative
 
-Northstar Corp's SRE team wants an incident-triage agent that pulls logs, compares deployments,
+Northstar Corp's site-reliability-engineering (SRE) team wants an incident-triage agent that pulls logs, compares deployments,
 and — when an incident is bad enough — reads the **regulated DB-failover runbook** to propose a
 remediation. That runbook (`runbooks-api:/runbooks/db-failover`, `dataClass: regulated`) is
 exactly the asset that must **not** be standing access for a bot.
@@ -52,7 +53,7 @@ The arc, condensed to the moment that matters:
 
 Stable enterprise subject is the **`employeeId`** (`NST-####`), deterministic across re-seeds —
 never the email. All hold org membership in `northstar-corp`. See the
-[glossary](/docs/getting-started/glossary/) for the IAM acronyms.
+[glossary](/docs/getting-started/glossary/) for the identity and access management (IAM) acronyms.
 
 | Persona | Subject | Email | Flow role |
 |---|---|---|---|
@@ -221,7 +222,7 @@ egress decision reports `no approved delegation` (and the control-plane fail-clo
 
 ## LangGraph example
 
-The same flow as a governed LangGraph node with a human-in-the-loop `interrupt()` →
+The same flow as a governed LangGraph node with a human-in-the-loop (HITL) `interrupt()` →
 approve → `Command(resume=...)`. **A durable checkpointer + `thread_id` are required** —
 without them `interrupt()` cannot pause and resume. This is the shipped
 `examples/langgraph_runbook_hitl.py`, runnable with no network. For the full adapter reference
@@ -306,7 +307,7 @@ Each step → SDK call → underlying API → the real policy decision and audit
 |---|---|---|---|---|
 | 1 | **Initial check — denied** | `task.check(action, resource)` | `POST /authz` (`X-Palonexus-On-Behalf-Of`, `-Actor`, `-Action`, `-Resource`) | **401** · `X-Palonexus-Needs-Approval: true` · `X-Palonexus-Deny-Reason: no approved delegation` → `PolicyDecision(allow=False, needs_approval=True)` |
 | 2 | **Request delegation** | `task.request_delegation(..., ttl=300)` | `POST /v1/delegations/request` | **201** · `Delegation(status="pending")`; `notAfter = now + ttl` |
-| 3 | **Maya approves → VC minted** | portal / `pn._fake.approve_delegation(id, approver=)` | `POST /v1/delegations/{id}/approve {"approver":"maya.chen@…"}` (authority `org:agents:approve`) | **200** · `status=approved`, `vcJti`, `notAfter` |
+| 3 | **Maya approves → Verifiable Credential (VC) minted** | portal / `pn._fake.approve_delegation(id, approver=)` | `POST /v1/delegations/{id}/approve {"approver":"maya.chen@…"}` (authority `org:agents:approve`) | **200** · `status=approved`, `vcJti`, `notAfter` |
 | 4 | **Retry authorize → allow** | `task.authorize(action, resource)` | `POST /authz` (identical headers) | **200** · `X-Palonexus-Subject: ethan.park@…` → `PolicyDecision(allow=True)`; audit `allow=true rule=inline` |
 | 5 | **TTL expiry** | next `task.check(...)` after `notAfter` | `GET /v1/delegations/check` | live `{"ok":false,"reason":"delegation expired"}` → `PolicyDecision(expired=True)` → `authorize` raises `DelegationExpired`. Offline: fast-forward with `pn._fake.advance(seconds)` to prove the same revert deterministically |
 | 6 | **Revoke** | `pn.revoke(delegation, reason=)` | `POST /v1/revoke {"vcJti": …}` | **200** · stays denied across restore |
@@ -389,13 +390,15 @@ services, follow the existing operations runbooks rather than re-deriving them h
   `smoke.sh` asserts the decision trio (`allow` public / `deny` private /
   `needs-approval` regulated egress) using this exact canonical target.
 - [DOKS runbook](/docs/operations/doks-runbook/) — zero-to-authority-bound-agent on `palonexus-doks`,
+  the DigitalOcean Kubernetes Service (DOKS) cluster,
   including the `SecurityPolicy.extAuth` keystone and the deploy-then-validate sign-off.
 
 :::caution[Live cluster runs `AGENT_IDENTITY_MODE=vc`]
 On the live cluster an anonymous, header-only egress `curl` **fails closed at 403** (*"verified
 agent credential required"*). The **401 + needs-approval** transition appears only once a verified
-agent Verifiable Presentation is present (the egress-sidecar flow), or via the `/simulate`
-dry-run. Mark the sensitive tool `dataClass: regulated` to force human-approved delegation via Rego.
+agent Verifiable Presentation (VP) is present (the egress-sidecar flow), or via the `/simulate`
+dry-run. Mark the sensitive tool `dataClass: regulated` to force human-approved delegation via
+Rego (the Open Policy Agent policy language).
 :::
 
 ## Failure cases
@@ -415,7 +418,7 @@ The **two-code convention** (`authz.go serveEgress` + [Troubleshooting](/docs/de
 | 7 | Unreachable `/authz` | fail-closed → `ControlPlaneUnavailable` (never silent allow) | ✅ |
 | 8 | Approver lacks authority / wrong domain | `approve_delegation` raises `GovernanceError` (`lacks org:agents:approve` / `outside_scenario_domain:…`); only Maya may approve devops | ✅ offline (`may_approve` two-gate) + live |
 | 9 | Wrong resource/scope mismatch | deny — must match the exact `(action, resource)` tuple | ✅ |
-| 10 | Cascade / SCIM leaver | all on-behalf-of (or tenant) delegations revoked; next call denies | ✅ |
+| 10 | Cascade / SCIM (System for Cross-domain Identity Management) leaver | all on-behalf-of (or tenant) delegations revoked; next call denies | ✅ |
 
 :::note[Offline parity — what the fake now enforces]
 The offline `FakeControlPlane` now models **TTL clock-expiry** (case 4 — fast-forward with

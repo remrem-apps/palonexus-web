@@ -22,11 +22,11 @@ human-approval path. This page is how that works in practice.
 | Layer | What it covers | What it can't see |
 |---|---|---|
 | **In-process middleware** (`palonexus_middleware.py`) | adds task/subject context; turns `needs_human_approval` into a LangGraph `interrupt()` | nothing if the agent is non-cooperating or compromised |
-| **Egress forward-proxy** (`HTTPS_PROXY` floor + the sidecar) | the *guarantee*: every byte leaving the pod traverses `/authz` carrying a VP | only raw HTTP — coarse allowlist + budget |
-| **Server-side DID/VC** (e.g. runbooks-api) | the fine-grained, human-approved, per-resource gate | irrelevant to coarse routing |
+| **Egress forward-proxy** (`HTTPS_PROXY` floor + the sidecar) | the *guarantee*: every byte leaving the pod traverses `/authz` carrying a Verifiable Presentation (VP) | only raw HTTP — coarse allowlist + budget |
+| **Server-side DID/VC** (decentralized identifier / Verifiable Credential; e.g. runbooks-api) | the fine-grained, human-approved, per-resource gate | irrelevant to coarse routing |
 
 The middleware is the ergonomic path; the proxy is the enforcement floor. A raw
-`curl` from the pod with no Verifiable Presentation is denied (`407`) — that is the
+`curl` from the pod with no VP is denied (`407`) — that is the
 whole point.
 
 ## How a model call traverses /authz

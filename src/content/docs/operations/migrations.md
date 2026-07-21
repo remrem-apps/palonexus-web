@@ -32,7 +32,7 @@ REGISTRY_DB_URL='postgres://palonexus:pw@pg-rw.palonexus.svc:5432/palonexus?sslm
 
 ### agent-idp store
 
-The store and the enterprise-IAM features create these tables automatically on first use (no
+The store and the enterprise identity-and-access-management (IAM) features create these tables automatically on first use (no
 migration step):
 
 ```text
@@ -55,7 +55,7 @@ IDP_DB_URL='postgresql://palonexus:pw@pg-rw.agent-idp.svc:5432/agentidp'
 
 ### LangGraph checkpointer
 
-Agents that need durable threads + HITL pause/resume use `AsyncPostgresSaver`. On startup the
+Agents that need durable threads + human-in-the-loop (HITL) pause/resume use `AsyncPostgresSaver`. On startup the
 agent calls `await checkpointer.setup()`, which creates LangGraph's checkpoint tables
 (`checkpoints`, `checkpoint_writes`, `checkpoint_blobs`, …). With no DB URL the agent falls back
 to a non-durable `MemorySaver`.
@@ -79,8 +79,8 @@ re-runs creation harmlessly** — existing data is preserved, missing tables are
 
 ## Provisioning with the `postgres` component
 
-The `deploy/kustomize/components/postgres/` component provisions a CloudNativePG `Cluster` per
-component (`palonexus`, `agent-idp`) and wires each DSN in from the generated `*-app` secret —
+The `deploy/kustomize/components/postgres/` component provisions a CloudNativePG (CNPG) `Cluster` per
+component (`palonexus`, `agent-idp`) and wires each data source name (DSN) in from the generated `*-app` secret —
 you don't create databases or write passwords by hand:
 
 ```yaml

@@ -3,7 +3,7 @@ title: PaloNexus
 description: The authorization and accountability service for AI-agent actions — the identity governance layer between AI agents and the systems they act upon. Accountable ownership, authority-bound delegation, just-in-time access, lifecycle-linked revocation, and a verifiable authority trail.
 template: splash
 hero:
-  tagline: "PaloNexus connects every agent action to an accountable human or service owner, verifies that the delegation is valid, issues narrowly scoped runtime credentials, and enforces that authority when an agent calls a model, tool, application programming interface, sandbox, or another agent."
+  tagline: "PaloNexus connects every agent action to an accountable human or service owner, verifies that the delegation is valid, issues narrowly scoped runtime credentials, and enforces that authority when an agent calls a model, tool, API, sandbox, or another agent."
   actions:
     - text: Start in 10 minutes
       link: /docs/getting-started/quickstart/
@@ -18,16 +18,24 @@ hero:
 ---
 
 import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Image } from 'astro:assets';
+import heroArch from '../../assets/palonexus-hero-arch.png';
 
-**PaloNexus makes sure an AI agent can act only with authority that a real person or service owner was entitled to delegate—and only for the task, resource, and time originally approved.**
+<Image
+	src={heroArch}
+	alt="Architecture diagram: agents in any runtime or sandbox — LangGraph, LangChain, Deep Agents, OpenAI Agents SDK, kagent, or your own — present an agent identity, owner, and task to PaloNexus. Inside PaloNexus, workforce identity providers (Okta, Entra ID, Google Workspace, Logto, HRIS) feed an authority directory; an authorization decision service evaluates agent, owner, task, action, resource, and context, answering allow, deny, or approve; a credential broker then issues short-lived, audience-bound credentials to reach enterprise systems — Kubernetes and cloud, GitHub and CI/CD, MCP servers and tools, SaaS and internal APIs, data platforms — which hold no standing credentials. Every result lands on a verifiable authority trail."
+	loading="eager"
+/>
 
 > Agent runtimes decide **how an agent works**.
 > Sandboxes decide **where its code runs**.
 > PaloNexus decides **what it is authorized to do and whose authority it is using**.
 
+PaloNexus makes sure an AI agent can act only with authority that a real person or service owner was entitled to delegate—and only for the task, resource, and time originally approved.
+
 PaloNexus is an **authorization and accountability service for AI-agent actions** — the
 identity governance layer between AI agents and the systems they act upon. Your workforce
-IdP (Okta, Entra ID, Auth0, Logto in the demo, …) owns your **humans**; PaloNexus owns your
+identity provider (IdP) — Okta, Entra ID, Auth0, Logto in the demo, … — owns your **humans**; PaloNexus owns your
 **agents** — giving each a signed identity and a mandatory accountable human owner, and
 deciding every action an agent takes (model call, tool call, agent→agent hop) at one
 **deny-by-default `/authz`** decision: *may this agent make this call, on behalf of this
@@ -36,8 +44,9 @@ trail, and the same decision also gates inbound calls.
 
 ## One concrete scenario: INC-4821
 
-During incident **INC-4821**, Northstar's devops agent needs to restart a production
-service. PaloNexus **denies** the call — the agent holds no standing production access.
+During incident **INC-4821** — the sample incident used in the demo scenario across these
+docs — the devops agent at Northstar, the fictional demo organization, needs to restart a
+production service. PaloNexus **denies** the call — the agent holds no standing production access.
 The service owner — a human PaloNexus verifies is *entitled* to approve this action for
 this resource — grants a **time-boxed, task-scoped elevation**. The re-checked call
 succeeds *on the owner's behalf*, the access expires automatically, and every step —
@@ -47,8 +56,9 @@ deny, approval, allow, expiry — lands on the authority trail.
 
 ## Works with
 
-- **Working today:** LangChain · LangGraph · Deep Agents · OIDC/SCIM workforce IdPs
-  (Okta, Entra ID, Logto) · Kubernetes/Envoy
+- **Working today:** LangChain · LangGraph · Deep Agents · workforce IdPs speaking
+  OpenID Connect (OIDC) and SCIM (System for Cross-domain Identity Management) —
+  Okta, Entra ID, Logto · Kubernetes/Envoy
 - **Planned:** kagent · Kubernetes Agent Sandbox · OpenAI Agents SDK · Model Context
   Protocol (MCP)
 
@@ -169,7 +179,7 @@ flow, end to end, copy-pasteable.
 
 ---
 
-**IdP-neutral by design.** PaloNexus sits beside your existing workforce IAM and never replaces
+**IdP-neutral by design.** PaloNexus sits beside your existing workforce identity and access management (IAM) and never replaces
 it. Logto is the **first supported enterprise IdP**; Okta, Entra ID, and others integrate on the
 same standard OIDC/SCIM surfaces as near-term roadmap. See
 [Connect agents to enterprise authority](/docs/concepts/enterprise-iam/). For the security

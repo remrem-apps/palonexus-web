@@ -1,5 +1,7 @@
 ---
+import { Image } from 'astro:assets';
 import type { HeroData } from '../../content.config';
+import heroArch from '../../assets/palonexus-hero-arch.png';
 
 interface Props {
 	data: HeroData;
@@ -28,26 +30,11 @@ const { data } = Astro.props;
 		</ul>
 	</div>
 
-	<div class="hero-panel" aria-label="PaloNexus authorization flow">
-		<div class="flow-row source">
-			<span>SRE agent</span>
-			<span>DevOps agent</span>
-			<span>Coding agent</span>
-		</div>
-		<div class="flow-core">
-			<p>PaloNexus authorization layer</p>
-			<div class="core-grid">
-				<span>Ownership</span>
-				<span>Delegation</span>
-				<span>Credentials</span>
-				<span>Authority trail</span>
-			</div>
-		</div>
-		<div class="flow-row target">
-			<span>Clouds</span>
-			<span>Tools</span>
-			<span>Data</span>
-			<span>Workflows</span>
-		</div>
+	<div class="hero-diagram">
+		<Image
+			src={heroArch}
+			alt="Architecture diagram: agents in any runtime or sandbox — LangGraph, LangChain, Deep Agents, OpenAI Agents SDK, kagent, or your own — present an agent identity, owner, and task to PaloNexus. Inside PaloNexus, workforce identity providers (Okta, Entra ID, Google Workspace, Logto, HRIS) feed an authority directory; an authorization decision service evaluates agent, owner, task, action, resource, and context, answering allow, deny, or approve; a credential broker then issues short-lived, audience-bound credentials to reach enterprise systems — Kubernetes and cloud, GitHub and CI/CD, MCP servers and tools, SaaS and internal APIs, data platforms — which hold no standing credentials. Every result lands on a verifiable authority trail."
+			loading="eager"
+		/>
 	</div>
 </section>

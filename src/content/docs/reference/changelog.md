@@ -43,7 +43,7 @@ The full, authoritative matrix — including rollback tags and upgrade order —
 |---|---|---|
 | `control-plane` | `:h13` | decision engine; upgrade **after** agent-idp |
 | `agent-idp` | `:h13` | the dependency — upgrade **first** |
-| `portal` | `:h13` | operator console + BFF |
+| `portal` | `:h13` | operator console + backend-for-frontend (BFF) |
 | `remediation` (agent runtime) | `:h12` | versions independently of the spine |
 | `model-broker` | `:dev` | unchanged across recent waves |
 | `palonexus` (SDK) | `0.1.0` | with `agentdid 0.1.0` and `idp-sdk 0.1.0` |

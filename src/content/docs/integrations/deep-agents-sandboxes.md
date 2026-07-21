@@ -60,7 +60,7 @@ Every step in that flow maps to shipped code documented on the SDK pages:
   starts denying. The shipped `palonexus-governance` skill
   ([Deep Agents adapter](/docs/sdk/deep-agents/#the-shipped-palonexus-governance-skill))
   teaches the agent to stop cleanly when that happens. Ephemeral runtime credentials via
-  STS token exchange are part of [Connect agents to enterprise authority](/docs/concepts/enterprise-iam/).
+  Security Token Service (STS) token exchange are part of [Connect agents to enterprise authority](/docs/concepts/enterprise-iam/).
 - **Record the authority trail.** Every decision — allow and deny — lands on the
   hash-chained audit trail (`pn.audit.verify_chain()` in the offline examples on the
   adapter pages).

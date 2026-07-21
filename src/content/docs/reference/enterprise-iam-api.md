@@ -8,9 +8,11 @@ sidebar:
 Use this page when you're integrating the workforce side of PaloNexus — syncing a directory,
 resolving an employee from a login token, governing who owns an agent, exchanging a
 delegation for a short-lived token, or issuing/verifying a governance credential. It's the
-full request/response contract for the core enterprise-IAM features (F1–F6) plus the
-compliance and provenance credential dimensions (F20, F24, F25), so you can drive directory,
-governance, STS, and credential flows over HTTP.
+full request/response contract for the core enterprise identity-and-access-management (IAM)
+features (F1–F6) plus the
+compliance and provenance credential dimensions (F20, F24, F25) — the F-numbers are
+PaloNexus feature identifiers, reused in the section headings below — so you can drive directory,
+governance, Security Token Service (STS), and credential flows over HTTP.
 
 These features live in the **agent-idp** service, alongside the
 agent onboarding / delegation / revocation APIs documented in
@@ -22,7 +24,7 @@ agent may exchange that delegation for. For the why, see
 
 **Base URL** — same service as the rest of agent-idp: `:8090` (env `PORT`). All these
 endpoints are unauthenticated management-plane calls in the MVP; the cryptographic edge is
-the STS token they mint (F6) and the VP verification under onboarding.
+the STS token they mint (F6) and the verifiable-presentation (VP) verification under onboarding.
 
 **Conventions**
 
@@ -43,13 +45,13 @@ the STS token they mint (F6) and the VP verification under onboarding.
 
 ## 1. Directory lifecycle sync (F1)
 
-Ingest a per-tenant **SCIM 2.0 snapshot** (the full desired state of Users + Groups) and
+Ingest a per-tenant **SCIM (System for Cross-domain Identity Management) 2.0 snapshot** (the full desired state of Users + Groups) and
 reconcile it into the directory. Snapshot diffing gives joiner / mover / leaver / rehire
 handling and idempotency for free: re-posting the same snapshot reports everything
 `unchanged`.
 
 The **stable enterprise subject** is `<idp>:<tenant_id>:<external_id>` — derived from the
-IdP's durable id (Entra `oid` / Okta `id`, surfaced as SCIM `externalId`), **never from
+identity provider's (IdP's) durable id (Entra ID `oid` / Okta `id`, surfaced as SCIM `externalId`), **never from
 email**, so an email change can never fork a person.
 
 | Method | Path | Purpose |
@@ -193,7 +195,7 @@ Resolve a decoded **login-token claim set** against the SCIM directory under exp
 source precedence. SCIM is authoritative; the token contributes session context and surfaces
 conflicts — it never mutates an authoritative field.
 
-> MVP: claims are trusted edge input — no JWT signature verification (deferred to BACKLOG).
+> MVP: claims are trusted edge input — no JSON Web Token (JWT) signature verification (deferred to BACKLOG).
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -648,7 +650,7 @@ https://pagerduty.acme.internal
 ```
 
 **Proof-of-possession (MVP):** `agentProof` must be `{"type":"mock_pop","value":"pop:<agentId>"}`.
-Its SHA-256 binds into the `cnf` claim. DPoP / mTLS / DID-bound proofs are deferred.
+Its SHA-256 binds into the `cnf` claim. DPoP / mutual-TLS (mTLS) / DID-bound proofs are deferred.
 
 **Signing key:** the token reuses the **existing issuer Ed25519 key**
 (`ISSUER_PRIVATE_KEY_B64`) — no new signing key; header `alg=EdDSA`, `typ=at+jwt`,
@@ -737,7 +739,7 @@ tracked gap (unlike provenance credentials in §9, where revoke does check it). 
 }
 ```
 
-Response (`201`) — the stored record plus the signed VC (Feature 24):
+Response (`201`) — the stored record plus the signed Verifiable Credential (VC) (Feature 24):
 
 ```json
 {
@@ -812,7 +814,7 @@ credential type, but what makes `vc_jwt` on either one independently verifiable.
 }
 ```
 
-A credential signed under a since-rotated key still verifies: the DID document lists every
+A credential signed under a since-rotated key still verifies: the Decentralized Identifier (DID) document lists every
 historical key alongside the current one, and `agentdid`'s resolver matches a JWT's `kid`
 header against any `verificationMethod` entry, not just the current key.
 

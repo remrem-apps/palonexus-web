@@ -7,7 +7,7 @@ sidebar:
 
 This is one **optional** provisioning example (DigitalOcean). PaloNexus runs on any Kubernetes or via Docker Compose — you do not need DigitalOcean.
 
-`infra/terraform-doks/` brings a budget **DOKS** cluster up and down for the demo. It
+`infra/terraform-doks/` brings a budget **DOKS** (DigitalOcean Kubernetes) cluster up and down for the demo. It
 provisions only the cloud substrate — VPC, cluster, registry — and wires the
 registry pull-credentials into the cluster. The platform workloads themselves are
 deployed *on top* via Kustomize (see [Self-hosting](/docs/operations/self-hosting/)).
@@ -27,7 +27,7 @@ deployed *on top* via Kustomize (see [Self-hosting](/docs/operations/self-hostin
 |---|---|
 | `digitalocean_vpc` | private network for the cluster (free) |
 | `digitalocean_kubernetes_cluster` | DOKS, one autoscaling default node pool; version is the latest stable patch via the `digitalocean_kubernetes_versions` data source; surge + auto-upgrade on, Sunday 08:00 UTC maintenance window |
-| `digitalocean_container_registry` (DOCR) | one private registry holding all platform image repositories |
+| `digitalocean_container_registry` (DOCR) | one private DigitalOcean Container Registry (DOCR) holding all platform image repositories |
 | `digitalocean_container_registry_docker_credentials` | read-only docker config secret attached to the cluster's default service accounts so pods pull private images without a hand-managed `imagePullSecret` |
 
 > DOCR is only offered in a subset of regions (not `nyc1`). The config falls back
@@ -108,7 +108,7 @@ REGISTRY="registry.digitalocean.com/<your-docr>" OPENAI_API_KEY="sk-..." \
 just DOKS. See [Self-hosting](/docs/operations/self-hosting/) for the overlay and
 component details.
 
-> For the full cold-start path — cluster → Gateway/Envoy CRDs → `kubectl apply -k`
+> For the full cold-start path — cluster → Gateway/Envoy Custom Resource Definitions (CRDs) → `kubectl apply -k`
 > → seed → deploy an authority-bound agent → verify allow/deny/needs-approval in ≤30
 > minutes — follow the [DOKS runbook — zero to authority-bound agent](/docs/operations/doks-runbook/).
 
@@ -122,7 +122,7 @@ component details.
 | VPC | — | 1 | $0 |
 | **Total** | | | **~$77/mo** |
 
-Levers: drop to 2 nodes (~$53/mo, tight on memory with LGTM + postgres); avoid a
+Levers: drop to 2 nodes (~$53/mo, tight on memory with the Grafana LGTM observability stack + postgres); avoid a
 `type: LoadBalancer` Service (~$12/mo) — prefer port-forward/Tailscale for the
 demo. PVCs (postgres, LGTM) are ~$0.10/GB/mo and are **not** removed by
 `terraform destroy` — clean them via `kubectl`/`doctl`.

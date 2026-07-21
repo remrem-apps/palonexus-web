@@ -64,8 +64,8 @@ flowchart TB
 *SDK layering: the umbrella `palonexus` package is a lean core (the facade over `palonexus.crypto` and `palonexus.idp`) with each framework adapter added as an opt-in extra that depends on the core.*
 
 `palonexus.crypto` (`agentdid`) stays an independently-versioned, dependency-light package
-because the **servers** import it directly too (agent-idp issues VCs; runbooks-operator
-verifies VPs). The SDK re-exports it as an ordinary dependency rather than folding it in — so
+because the **servers** import it directly too (agent-idp issues Verifiable Credentials
+(VCs); runbooks-operator verifies verifiable presentations (VPs)). The SDK re-exports it as an ordinary dependency rather than folding it in — so
 installing the client never drags a web server into a service that only needs `verify_vp()`.
 
 ## Install (core + extras)
@@ -86,10 +86,10 @@ dependency on top — nothing else:
 |---|---|---|---|
 | `palonexus` | `PaloNexus`, the [ten models](#the-ten-typed-models), the [error tree](#deny-by-default-as-typed-exceptions), `palonexus.crypto`, `palonexus.idp` | `httpx`, `pydantic`, `agentdid`, `idp-sdk` | Always — `task.check()` / `authorize()`, register, delegate, audit, revoke. |
 | `palonexus[langchain]` | `palonexus.langchain` | `langchain>=0.3` | Guard a `create_agent` tool with `middleware(pn)` + `guarded_tool`. |
-| `palonexus[langgraph]` | `palonexus.langgraph` | `langgraph>=0.2` | Govern a graph node with `governed_node` + HITL `interrupt()`. |
+| `palonexus[langgraph]` | `palonexus.langgraph` | `langgraph>=0.2` | Govern a graph node with `governed_node` + human-in-the-loop (HITL) `interrupt()`. |
 | `palonexus[deepagents]` | `palonexus.deepagents` | `deepagents` (on LangChain/LangGraph) | Govern `create_deep_agent(...)` with `tool_guard` + `governance_middleware`. |
 | `palonexus[server]` | the FastAPI host | `fastapi`, `uvicorn` | Host the SDK as a service. |
-| `palonexus[otel]` | span export | `opentelemetry-api` / `-sdk` | Export the `pn.task(...)` OTel spans. |
+| `palonexus[otel]` | span export | `opentelemetry-api` / `-sdk` | Export the `pn.task(...)` OpenTelemetry (OTel) spans. |
 | `palonexus[all]` | everything above | all of the above | Demos / one-shot environments. |
 
 The adapter modules (`palonexus.langchain`, `.langgraph`, `.deepagents`) are *importable* on a
@@ -109,8 +109,8 @@ pn = PaloNexus(control_plane_url="http://localhost:9191",
 
 `PaloNexus.offline()` mirrors the demo seeder's `FakeLogtoClient` philosophy: the full
 register → deny → delegate → approve → succeed flow runs against an in-memory control plane
-seeded with the real **devops-incident** personas, so unit tests and the doc snippets on this
-site need no cluster.
+seeded with the real personas from **devops-incident** (the demo scenario used throughout
+these docs), so unit tests and the doc snippets on this site need no cluster.
 
 ## The ten typed models
 
@@ -120,7 +120,7 @@ platform surface:
 | Model | Backed by |
 |---|---|
 | `AgentIdentity` | agent-idp `/v1/agents` + `/provision` (`did:key` + Membership VC) |
-| `HumanOwner` | the workforce directory (synced from your IdP) via agent-idp `/v1/directory` (stable subject, `org:agents:*`) |
+| `HumanOwner` | the workforce directory (synced from your identity provider, IdP) via agent-idp `/v1/directory` (stable subject, `org:agents:*`) |
 | `Delegation` | agent-idp `/v1/delegations` (`pending → approved → …`) |
 | `TaskSession` | the unit of governed work (bound by `pn.task(...)`) |
 | `PolicyDecision` | control-plane `/authz` (`allow`, `needs_approval`, `reason`, …) |
@@ -173,8 +173,8 @@ have an explicit graph, and [Deep Agents](/docs/sdk/deep-agents/) for planner/su
 - [Configuration & environment variables](/docs/sdk/config-env/) — the full env-var table.
 - [Glossary](/docs/getting-started/glossary/) — every acronym used in these docs.
 
-> **Looking for the enterprise-IAM APIs?** Directory sync, employee identity, ownership
-> governance, revocation cascade, human-authority delegation, and the STS token exchange are
+> **Looking for the enterprise identity and access management (IAM) APIs?** Directory sync, employee identity, ownership
+> governance, revocation cascade, human-authority delegation, and the Security Token Service (STS) token exchange are
 > HTTP APIs on the agent-idp service — see the
 > [Enterprise IAM API reference](/docs/reference/enterprise-iam-api/), the
 > [how-to guide](/docs/develop/enterprise-iam/), and the [concept](/docs/concepts/enterprise-iam/).

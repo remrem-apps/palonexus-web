@@ -12,8 +12,13 @@ want the smallest set that works, jump to [Minimum viable env, per deployment
 mode](#minimum-viable-env-per-deployment-mode).
 
 Because config is all env, the same image runs in dev and prod, and only the Kustomize
-overlay changes between them. The dev overlay simply removes the OIDC vars to allow anonymous
+overlay changes between them. The dev overlay simply removes the OpenID Connect (OIDC) vars to allow anonymous
 passthrough while policy still enforces public-vs-private from the registry.
+
+Recurring short forms in the tables below: `ext_authz` is Envoy's external-authorization
+hook; JWT / JWKS are JSON Web Token / JSON Web Key Set; OPA is the Open Policy Agent; a VP
+is a verifiable presentation (the agent's signed wrapper around its Verifiable Credential,
+VC); and a DSN is a data source name.
 
 ## Control plane
 
@@ -54,7 +59,7 @@ REGISTRY_BACKEND=mongodb   REGISTRY_DB_URL=mongodb://mongo.palonexus.svc:27017/p
 | `IDP_DB_URL` | *(unset)* | DSN for the chosen store backend (required for non-memory) |
 | `LOG_LEVEL` | `INFO` | Python log level |
 
-The issuer/root DID is `did:web:agent-idp.agent-idp.svc` (derived from the in-cluster
+The issuer/root Decentralized Identifier (DID) is `did:web:agent-idp.agent-idp.svc` (derived from the in-cluster
 host). The default delegation TTL and the StatusList id (`default`) are defined in
 `app/issuer.py`.
 
@@ -64,9 +69,9 @@ IDP_STORE_BACKEND=postgres IDP_DB_URL='postgresql://palonexus:pw@pg-rw.agent-idp
 
 ### Enterprise IAM (directory, governance, authority, STS)
 
-The enterprise-IAM features add **no new required environment variables**. They persist
+The enterprise identity-and-access-management (IAM) features add **no new required environment variables**. They persist
 through the same `IDP_STORE_BACKEND` / `IDP_DB_URL` already documented above, and the
-STS token signer **reuses the existing issuer Ed25519 key** (`ISSUER_PRIVATE_KEY_B64`
+Security Token Service (STS) token signer **reuses the existing issuer Ed25519 key** (`ISSUER_PRIVATE_KEY_B64`
 — see *agentdid / issuer* below) — there is no separate signing key.
 
 What an operator would tune today lives as **module constants**, not env vars. These are
@@ -142,7 +147,7 @@ facade**, which defaults to `localhost` for local dev):
 | `PALONEXUS_MGMT_URL` | `http://localhost:8181` | the management plane (registry, audit) the SDK reads |
 | `PALONEXUS_IDP_URL` | `http://localhost:8090` | agent-idp base URL (register, provision, delegations, revocation) |
 | `PALONEXUS_API_KEY` | *(unset)* | SDK API key (`pn_live_…` / `pn_test_…`); sent as the bearer for SDK calls |
-| `PALONEXUS_TENANT_ID` | `""` | tenant/org id (e.g. `7gdgqfu5j0oo` for Northstar) |
+| `PALONEXUS_TENANT_ID` | `""` | tenant/org id (e.g. `7gdgqfu5j0oo` for Northstar Corp, the fictional demo org) |
 | `PALONEXUS_AGENT_TOKEN` | `""` | the agent workload token for live egress decisions |
 | `PALONEXUS_OFFLINE` | `""` | when truthy (`1`/`true`/`yes`), `from_env()` returns an in-memory `PaloNexus.offline()` — no cluster, no network |
 
@@ -157,7 +162,8 @@ pn = PaloNexus.offline()           # or force offline regardless of env
 :::note[Reference demo (Logto) — optional]
 These variables configure the **demo seeder** that loads the Northstar **demo**
 identity model into a **Logto** reference tenant. They are **only needed to run the
-demo seed** — PaloNexus itself does not require Logto. Any OIDC/SCIM workforce IdP
+demo seed** — PaloNexus itself does not require Logto. Any OIDC/SCIM (System for
+Cross-domain Identity Management) workforce identity provider (IdP)
 (Okta, Microsoft Entra ID, Auth0, Ping, Google Workspace, Amazon Cognito, Keycloak,
 Logto, …) integrates via the standard patterns — see
 [IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model).
@@ -181,7 +187,7 @@ It is configured entirely by `LOGTO_*` (an `.env.example` ships in `platform/see
 | `LOGTO_MAX_DELETE` | `400` | safety cap on deletions per run |
 | `ALLOW_LOGTO_SEED` | `true` | master enable for any write |
 
-The M2M id/secret are credentials — handle them per [Secrets](/docs/operations/secrets/), never
+The machine-to-machine (M2M) id/secret are credentials — handle them per [Secrets](/docs/operations/secrets/), never
 bake them into an image.
 
 ## Minimum viable env, per deployment mode

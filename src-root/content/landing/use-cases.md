@@ -4,9 +4,9 @@ eyebrow: Start here
 heading: Prevent agents and coding sandboxes from receiving standing production credentials.
 items:
   - >-
-    Denied by default. During incident INC-4821, an SRE agent requests a production
-    deployment restart. It holds no standing credentials, so the action stops at the
-    decision point.
+    Denied by default. During a live incident (INC-4821 in the demo), an SRE agent
+    requests a production deployment restart. It holds no standing credentials, so the
+    action stops at the decision point.
   - >-
     Owner-verified approval. PaloNexus routes the request to the service owner — and
     verifies that this person is actually entitled to approve this action on this

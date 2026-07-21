@@ -16,7 +16,8 @@ interceptor, or CRD support.
 > **kagent runs the agent. PaloNexus governs the authority it uses.**
 
 [kagent](https://kagent.dev/) makes agents behave like Kubernetes-native workloads:
-declarative agent CRDs, model configuration, built-in cloud-native tools, MCP integration,
+declarative agent custom resource definitions (CRDs), model configuration, built-in
+cloud-native tools, Model Context Protocol (MCP) integration,
 and human approval gates. What it does not establish is *enterprise authority*: which human
 is accountable for the agent, whether an approver was actually entitled to approve an
 action on that resource, and what happens to the agent's access when that human changes
@@ -27,7 +28,7 @@ runs, or observes the agent.
 
 The design follows the "keep your runtime, add accountable authorization" pattern:
 
-1. kagent deploys the agent using its Custom Resource Definition, as it does today.
+1. kagent deploys the agent using its CRD, as it does today.
 2. A PaloNexus controller would register the agent and resolve its accountable human owner
    from the workforce directory.
 3. The agent's tool and MCP calls would pass through a PaloNexus gateway (the
@@ -43,7 +44,7 @@ The design follows the "keep your runtime, add accountable authorization" patter
 
 As intended behavior, the difference from a generic "require approval" flag:
 
-- kagent's SRE agent can inspect pods — routine, allowed.
+- kagent's site-reliability-engineering (SRE) agent can inspect pods — routine, allowed.
 - It attempts to restart a production deployment (`checkout`).
 - PaloNexus sees that the agent's owner does **not** own the checkout service — so it
   refuses to route the approval to an arbitrary administrator.

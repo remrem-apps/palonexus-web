@@ -6,8 +6,11 @@ sidebar:
 ---
 
 Task-focused, **runnable** patterns built on the shipped `examples/` and the
-**devops-incident** scenario. Every snippet here runs against `PaloNexus.offline()` (no cluster,
-no network, no API key) using the real Northstar seed personas — **no invented users**:
+**devops-incident** scenario — the demo scenario from the
+[temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/).
+Every snippet here runs against `PaloNexus.offline()` (no cluster,
+no network, no API key) using the real seed personas of Northstar Corp, the
+fictional demo organization — **no invented users**:
 
 > **devops-incident** — owner **Ethan Park**, sponsor + approver **Maya Chen**, operator
 > **Arjun Mehta**, auditor **Omar Haddad**; the seeded **negative persona** (must be hard-denied)
@@ -19,7 +22,7 @@ Each recipe was executed against the shipped `palonexus` package while writing t
 
 | Recipe | Pattern |
 |---|---|
-| [A2A delegation](/docs/develop/recipes/a2a-delegation/) | An agent delegates to a sub-agent; the hop is itself gated and carries the original on-behalf-of subject. |
+| [A2A delegation](/docs/develop/recipes/a2a-delegation/) | An agent delegates to a sub-agent; the agent-to-agent (A2A) hop is itself gated and carries the original on-behalf-of subject. |
 | [Revocation race](/docs/develop/recipes/revocation-race/) | A grant is revoked mid-run; the next `/authz` check denies immediately. |
 | [Budget exhaustion](/docs/develop/recipes/budget-exhaustion/) | An agent hits its calls/tokens ceiling; how the deny surfaces and how to set the budget. |
 | [Multi-scenario agent](/docs/develop/recipes/multi-scenario-agent/) | One process governing several scenarios at once, each with its own personas and negative case. |

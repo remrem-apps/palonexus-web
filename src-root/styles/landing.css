@@ -82,10 +82,17 @@
 .hero {
 	display: grid;
 	gap: 48px;
-	grid-template-columns: minmax(0, 1fr) minmax(360px, 0.72fr);
+	grid-template-columns: 1fr;
 	margin: 0 auto;
 	max-width: 1180px;
 	padding: 88px 28px 72px;
+}
+
+.hero-diagram img {
+	border-radius: 16px;
+	box-shadow: 0 30px 80px rgba(18, 20, 19, 0.14);
+	height: auto;
+	width: 100%;
 }
 
 .hero-copy {
@@ -180,65 +187,6 @@ p {
 
 .button.secondary {
 	background: #fffaf2;
-	color: #121413;
-}
-
-.hero-panel {
-	align-self: center;
-	background: #141817;
-	border: 1px solid rgba(255, 255, 255, 0.12);
-	border-radius: 8px;
-	box-shadow: 0 30px 80px rgba(18, 20, 19, 0.22);
-	color: #f8f5ef;
-	display: grid;
-	gap: 20px;
-	min-height: 430px;
-	padding: 24px;
-}
-
-.flow-row,
-.core-grid {
-	display: grid;
-	gap: 10px;
-}
-
-.flow-row.source {
-	grid-template-columns: repeat(3, 1fr);
-}
-
-.flow-row.target,
-.core-grid {
-	grid-template-columns: repeat(2, 1fr);
-}
-
-.flow-row span,
-.core-grid span {
-	border: 1px solid rgba(255, 255, 255, 0.14);
-	border-radius: 8px;
-	color: #e8e0d1;
-	font-size: 13px;
-	font-weight: 720;
-	padding: 13px;
-	text-align: center;
-}
-
-.flow-core {
-	background: #f2c166;
-	border-radius: 8px;
-	color: #121413;
-	padding: 22px;
-}
-
-.flow-core p {
-	color: #121413;
-	font-size: 18px;
-	font-weight: 800;
-	margin-bottom: 16px;
-	text-align: center;
-}
-
-.core-grid span {
-	border-color: rgba(18, 20, 19, 0.18);
 	color: #121413;
 }
 
@@ -507,10 +455,6 @@ p {
 		padding-top: 52px;
 	}
 
-	.hero-panel {
-		min-height: 0;
-	}
-
 	.solution-grid,
 	.use-case-list,
 	.works-with-groups {
@@ -542,12 +486,6 @@ p {
 
 	.hero-lede {
 		font-size: 18px;
-	}
-
-	.flow-row.source,
-	.flow-row.target,
-	.core-grid {
-		grid-template-columns: 1fr;
 	}
 
 	.nav-cta,

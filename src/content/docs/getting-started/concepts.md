@@ -59,7 +59,7 @@ an approved, time-boxed delegation, never through a durable role grant.
 ## One authorization contract (`/authz`)
 
 Everything converges on a single authorization call — the platform's **one authorization
-contract**. Envoy's `ext_authz` filter asks the control plane *may this caller reach this
+contract**. Envoy's external-authorization (`ext_authz`) filter asks the control plane *may this caller reach this
 target?* on every request. The same `/authz` logic governs **agent egress** — a model call,
 tool call, or agent→agent hop is the same shape of question (`actor`, `on-behalf-of`,
 `task`, `target`, `action`, `resource`).
@@ -67,11 +67,12 @@ tool call, or agent→agent hop is the same shape of question (`actor`, `on-beha
 ## Ingress vs egress
 
 - **Ingress (north–south):** a client → Envoy gateway → `/authz` → upstream service.
-  Identity is a bearer token (OIDC via Dex); the target is resolved from the registry.
+  Identity is a bearer token (OpenID Connect (OIDC) via Dex); the target is resolved from the registry.
 - **Egress (the hard part):** an agent's outbound call → the egress proxy → `/authz` →
   model/tool/peer/external. Identity is a **signed agent credential, presented fresh on
   each call** (see [Credential formats](#credential-formats-implementation) for the wire
-  format); the decision adds allowlist, budget, delegation/TBAC, and OPA.
+  format); the decision adds allowlist, budget, delegation/Task-Based Access Control (TBAC),
+  and an Open Policy Agent (OPA) check.
 
 Egress is enforced at the **network layer** (NetworkPolicy confines the pod to the egress
 proxy), so it holds for *any* framework — not just cooperating SDK code.
@@ -101,8 +102,8 @@ egress **allowlist** (`allowModels`/`allowTools`/`allowAgents`), **budget**
 
 ## The request lifecycle, end to end
 
-These ideas come together on a single regulated egress call. Here is the full lifecycle — VP
-verification, deny-by-default, delegation, human approval, re-authorization, and the audit
+These ideas come together on a single regulated egress call. Here is the full lifecycle —
+Verifiable Presentation (VP) verification, deny-by-default, delegation, human approval, re-authorization, and the audit
 record — for one agent reading a regulated runbook on behalf of a human:
 
 ```mermaid
@@ -134,8 +135,8 @@ trail.*
 Externally, the PaloNexus vocabulary is deliberately format-neutral: **agent identity**,
 **signed agent credentials**, **delegated authority**, **proof of authorization**, and
 **short-lived runtime credentials**. Beneath that vocabulary, the shipped implementation
-uses **DID/VC — one supported credential format, an implementation mechanism rather than
-the product category**:
+uses **DID/VC (Decentralized Identifiers / Verifiable Credentials) — one supported
+credential format, an implementation mechanism rather than the product category**:
 
 - **Agent identity (DID/VC).** Agents are **`did:key`** subjects (self-certifying, minted
   per agent) issued an **issuer-signed Membership VC** by the **`did:web`** anchor
@@ -143,7 +144,7 @@ the product category**:
   `/authz` — revoke an agent and its egress stops within seconds. See
   [Accountable agent identity](/docs/develop/agent-identity/).
 - **Proof of identity on each call.** On every egress call the agent builds a fresh,
-  holder-signed **Verifiable Presentation (VP)** wrapping its Membership VC — proving *who
+  holder-signed **VP** wrapping its Membership VC — proving *who
   is calling, right now* without forwarding a raw bearer token.
 - **Delegated authority.** An approved delegation is carried as a **Delegation VC** — the
   time-boxed, task-scoped credential from

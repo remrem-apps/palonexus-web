@@ -10,10 +10,11 @@ authority it used, whether that authority was still valid, and why the action wa
 allowed** — even against a workload willing to lie about who it is. That is why an
 agent's identity on PaloNexus is **cryptographic, not a trusted header**: a signed
 agent credential, revocable at any moment, tied through governance to an accountable
-human owner. DID/VC is **one supported credential format** — the mechanism used here,
-not the category. Concretely, the actor is a self-certifying `did:key` anchored to
-the org's `did:web` issuer, behind a non-revoked Membership Verifiable Credential
-(VC). The `X-Palonexus-Actor` header is honoured only when it matches the proven DID.
+human owner. A decentralized identifier (DID) with Verifiable Credentials (VC) is
+**one supported credential format** — the mechanism used here, not the category.
+Concretely, the actor is a self-certifying `did:key` anchored to
+the org's `did:web` issuer, behind a non-revoked Membership VC.
+The `X-Palonexus-Actor` header is honoured only when it matches the proven DID.
 
 ## Self-provision at agent-idp
 
@@ -46,8 +47,8 @@ client-side first then re-validated at agent-idp), and only a registered agent c
 provision a `did:key` + Membership VC.*
 
 The agent gets a **`did:key`** subject (offline-verifiable) anchored to the org's
-**`did:web`** issuer. The IdP mints the DID plus a Membership VC and one Capability
-VC per requested capability. Run agent-idp locally on `:8090`:
+**`did:web`** issuer. The IdP (identity provider) mints the DID plus a Membership VC
+and one Capability VC per requested capability. Run agent-idp locally on `:8090`:
 
 ```bash
 cd agent-idp
@@ -84,7 +85,7 @@ It also writes its identity to the shared file the egress sidecar reads — see
 [Credential-Safe Action Enforcement](/docs/develop/egress-enforcement/).
 
 :::note[Identity bootstrap bypasses the proxy]
-The agent has no VP until it has provisioned, so the call to agent-idp must bypass
+The agent has no verifiable presentation (VP) until it has provisioned, so the call to agent-idp must bypass
 the egress proxy. `NO_PROXY` carves out `agent-idp`, and the NetworkPolicy allows
 `agent-idp:8090` directly. Everything afterward routes through the proxy.
 :::
@@ -92,13 +93,13 @@ the egress proxy. `NO_PROXY` carves out `agent-idp`, and the NetworkPolicy allow
 ## The VP on egress
 
 On every outbound call the agent (or its sidecar) presents a short-lived
-**Verifiable Presentation (VP)** of its Membership VC as
+**VP** of its Membership VC as
 `Proxy-Authorization: Bearer <VP>`. The egress proxy:
 
 1. verifies the VP signature against the agent's `did:key`,
 2. confirms the wrapped Membership VC is non-revoked (StatusList check),
 3. derives the proven `actorName` / `actorDid`,
-4. runs the egress decision (allowlist → budget → delegation → OPA).
+4. runs the egress decision (allowlist → budget → delegation → OPA, the Open Policy Agent).
 
 Because the proxy re-checks the StatusList on **every** call, the VP itself can
 carry a long TTL (the sidecar mints 12h VPs) without weakening revocation.

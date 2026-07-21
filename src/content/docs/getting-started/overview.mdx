@@ -38,7 +38,7 @@ category boundaries.
   <LinkCard
     title="Temporary-elevation walkthrough"
     href="/docs/develop/guides/temporary-elevation-walkthrough/"
-    description="The INC-4821 hero flow end to end: a production action is denied, an entitled owner grants a time-boxed elevation, the call succeeds on their behalf, and access expires automatically."
+    description="The INC-4821 hero flow — the sample incident used across these docs — end to end: a production action is denied, an entitled owner grants a time-boxed elevation, the call succeeds on their behalf, and access expires automatically."
   />
   <LinkCard
     title="Reference"
@@ -64,7 +64,8 @@ category boundaries.
 1. An agent attempts an action — a model call, tool call, agent→agent hop, or API request.
 
 2. The call reaches the deny-by-default **`/authz`** decision point — via an SDK guard, the
-   egress proxy, or Envoy `ext_authz` at the gateway. There is no path around it.
+   egress proxy, or Envoy's external-authorization hook (`ext_authz`) at the gateway. There
+   is no path around it.
 
 3. PaloNexus resolves the agent's **identity**, its accountable **owner**, and the
    on-behalf-of **subject** the task is bound to.
@@ -82,12 +83,12 @@ category boundaries.
 
 </Steps>
 
-The same loop in one picture — your workforce IdP owns your humans, PaloNexus owns your
+The same loop in one picture — your workforce identity provider (IdP) owns your humans, PaloNexus owns your
 agents, and one decision connects them:
 
 ```mermaid
 flowchart LR
-    L[Workforce IdP<br/>owns humans<br/>Okta · Entra · Logto…] -->|owner + sponsor| P[PaloNexus<br/>owns agents]
+    L[Workforce IdP<br/>owns humans<br/>Okta · Entra ID · Logto…] -->|owner + sponsor| P[PaloNexus<br/>owns agents]
     P -->|outbound call:<br/>deny-by-default| Z{authz}
     Z -->|needs approval| H[Human delegates<br/>task-scoped access]
     H -->|approve, time-boxed| E[Temporary elevation<br/>Delegation VC]
@@ -98,7 +99,8 @@ flowchart LR
 *The PaloNexus control loop: your workforce IdP (Okta, Entra ID, Logto in the demo, …) owns
 humans, PaloNexus owns agents, a human delegates task-scoped access, an approval turns a
 denial into a time-boxed elevation, and every `/authz` decision is proven on the audit chain.
-Any OIDC/SCIM IdP plugs in the same way — see
+Any IdP speaking OpenID Connect (OIDC) and SCIM (System for Cross-domain Identity
+Management) plugs in the same way — see
 [Connect agents to enterprise authority](/docs/concepts/enterprise-iam/).*
 
 The same one authorization contract also gates inbound (north–south) requests entering the
@@ -133,7 +135,8 @@ the [Feature matrix](/docs/concepts/feature-matrix/).
 | **Lifecycle-linked revocation** | Human and organizational changes cascade immediately into agent access and ownership state. |
 | **Verifiable authority trail** | Every action can be traced from the agent to the task, delegation, approver, policy, runtime credential, and target outcome. |
 
-Network enforcement, signed credentials, DIDs, Verifiable Credentials, OPA, Envoy, and
+Network enforcement, signed credentials, Decentralized Identifiers (DIDs), Verifiable
+Credentials (VCs), Open Policy Agent (OPA), Envoy, and
 Kubernetes are **implementation mechanisms beneath these pillars** — they are how the
 guarantees are enforced, not what the product is.
 

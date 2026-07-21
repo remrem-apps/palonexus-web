@@ -36,6 +36,10 @@ sequenceDiagram
 between two checks denies the second one regardless of remaining TTL. There is no
 stale-grant window.*
 
+The recipe uses the Northstar demo cast — the agent acts for Ethan Park, with Maya Chen
+approving, on `INC-4821`, the sample incident from the
+[temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/):
+
 ```python
 from palonexus import PaloNexus
 
@@ -89,7 +93,7 @@ egress-proxy) call that depends on any revoked credential denies in under a seco
   [`CredentialRevoked`](/docs/develop/troubleshooting/#vc-expiry-revocation-and-clock-skew); the
   shipped `palonexus-governance` skill teaches the agent to stop cleanly and not retry.
 - **Least-privilege by construction.** Delegations are task-scoped and time-boxed anyway
-  ([TBAC](/docs/getting-started/glossary/)); cascade revocation
+  (task-based access control — [TBAC](/docs/getting-started/glossary/)); cascade revocation
   is the immediate override.
 
 ## Related

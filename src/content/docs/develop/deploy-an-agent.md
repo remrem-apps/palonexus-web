@@ -126,7 +126,7 @@ spec:
 
 The same template includes the **Service** and the **ingress HTTPRoute**. The
 HTTPRoute tags the registry service name the control plane resolves — identical to
-the `orders`/`echo` demo routes:
+the platform's `orders`/`echo` sample routes from the quickstart demo:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -182,13 +182,14 @@ NetworkPolicy enforces the **pod** port (post-DNAT), not the Service port. The
 pod port). The `egress-enforcement` component handles this for the platform agents.
 :::
 
-For the four platform agents, prefer the **`egress-enforcement` +
+For the four platform agents — the shipped site-reliability-engineering (SRE) demo
+agents — prefer the **`egress-enforcement` +
 `egress-sidecar` + `agent-admission`** Kustomize components over hand-rolling
 these — they supply the proxy, flip each agent's egress policy to proxy-only,
 stamp the proxy env, and reject any `palonexus.io/agent=true` pod whose agent
-isn't registered + provisioned at the IdP. See
+isn't registered + provisioned at the IdP (identity provider). See
 [self-hosting](/docs/operations/self-hosting/) for the prerequisites (Gateway API
-CRDs + Envoy Gateway) and `kubectl apply -k`.
+custom resource definitions (CRDs) + Envoy Gateway) and `kubectl apply -k`.
 
 ## 4. Register the agent and its egress allowlist
 
@@ -226,7 +227,8 @@ unknown kind) returns false. Registry mutations are themselves audited — expec
 
 :::note[dataClass: internal vs regulated]
 `runbooks-api` is registered `dataClass: internal` because its fine-grained,
-human-approved DID/VC enforcement is **server-side** — the proxy can only do the
+human-approved DID/VC (decentralized identifier / Verifiable Credential)
+enforcement is **server-side** — the proxy can only do the
 coarse allowlist gate, so the fine gate happens at the resource. Targets with **no**
 server-side gate (e.g. `scale_deployment`) stay `regulated`, so the proxy *holds*
 them for human approval. See [Authority delegation](/docs/develop/delegations-and-approvals/).

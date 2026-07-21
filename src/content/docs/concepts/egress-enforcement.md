@@ -21,7 +21,7 @@ agent→agent hop, an external webhook) pass through the *same* `/authz` decisio
 `httpx`/`curl`), enforced at the **network layer** rather than by cooperative
 middleware, and with a **human egress-approval** path for risky calls.
 
-> **Status: shipped and verified live on a managed Kubernetes cluster (DOKS example).** This page summarizes the canonical
+> **Status: shipped and verified live on a managed Kubernetes cluster (DigitalOcean Kubernetes — DOKS — example).** This page summarizes the canonical
 > design (`docs/egress-enforcement.md` in the platform repo).
 
 ## Defense in depth: the layers
@@ -48,7 +48,8 @@ It handles two request shapes:
   `http://model-broker.palonexus.svc:8080/...`), and
 - `CONNECT host:port` (a TLS tunnel for external `https://...`).
 
-**Identity.** It reads `Proxy-Authorization: Bearer <Membership-VP>` and verifies it
+**Identity.** It reads `Proxy-Authorization: Bearer <Membership-VP>` — a Verifiable
+Presentation (VP) proving the agent's identity — and verifies it
 via agent-idp:
 
 | Condition | Result |
@@ -110,7 +111,7 @@ localhost **sidecar** container in each agent pod (`components/egress-sidecar`):
   and forwards to the real broker **through** the egress proxy, with the VP as
   `Proxy-Authorization`.
 
-A long TTL is safe because the proxy re-checks the Membership VC against the
+A long TTL is safe because the proxy re-checks the Membership Verifiable Credential (VC) against the
 revocation StatusList on *every* call — revocation still cuts egress immediately.
 
 ## The egress decision, step by step
@@ -121,9 +122,9 @@ diamond can only move forward on an explicit yes, and any "no" falls straight to
 deny**. After identity (the VP) is verified and the caller and target are resolved from the
 registry, the call must clear the **allowlist + budget** gate. Then the target's `dataClass`
 forks the path: a `regulated` target with no valid, human-approved delegation becomes a
-**needs-approval `401`** that is *held* for a human (the TBAC branch), while an `internal`
+**needs-approval `401`** that is *held* for a human (the task-based access control — TBAC — branch), while an `internal`
 target or one already covered by a valid delegation proceeds to the inline allow. The last
-gate is the **deny-overrides OPA veto** — an inline allow plus an OPA deny still denies, so
+gate is the **deny-overrides Open Policy Agent (OPA) veto** — an inline allow plus an OPA deny still denies, so
 OPA can veto but never rubber-stamp.
 
 ```mermaid
@@ -163,7 +164,7 @@ The egress proxy is the **coarse** gate: it proves identity, enforces the allowl
 and meters the budget. It sees only raw HTTP, so it cannot match a fine-grained
 delegation like `runbook:read` on a specific resource.
 
-Fine-grained, human-approved DID/VC enforcement is therefore done **server-side** by
+Fine-grained, human-approved Decentralized Identifier (DID) / VC enforcement is therefore done **server-side** by
 the protected resource itself. This applies to **any** resource type — runbooks,
 payments, ticketing, a data API — not a specific one; the example below uses the
 runbooks demo resource, but a `payments-api` enforcing `payments:write` works the same
@@ -182,10 +183,10 @@ cryptographic identity that underpins all of this.
 
 ## The autonomous hero flow
 
-End to end through the real LangGraph agents: `incident-triage` summarizes (model call
-via its sidecar → `/authz`) → reads a runbook → **DENIED** → escalates A2A to
-`access-broker` (carrying a VP) → broker requests a delegation *for the actor* and
-block-polls the IdP → **a human approves in the portal** → the Delegation VC is
+End to end through the demo's real LangGraph agents: `incident-triage` summarizes (model call
+via its sidecar → `/authz`) → reads a runbook → **DENIED** → escalates agent-to-agent (A2A) to
+`access-broker` (carrying a VP) → the broker requests a delegation *for the actor* and
+block-polls the identity provider (IdP) → **a human approves in the portal** → the Delegation VC is
 granted → triage reads the runbook via the DID/VC challenge through the proxy → a
 grounded plan. **Every hop is decided at `/authz`.**
 

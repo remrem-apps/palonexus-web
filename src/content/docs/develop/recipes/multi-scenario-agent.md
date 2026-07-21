@@ -10,7 +10,9 @@ a single process and shows that authority is **per-scenario**: each scenario's o
 deny-by-default until granted, and each scenario's **negative persona** is hard-denied — a person
 authorized in one scenario has no standing in another.
 
-The seeded scenarios (from `palonexus.testing.SEED_SCENARIOS`) carry the real personas:
+The seeded scenarios (from `palonexus.testing.SEED_SCENARIOS`) carry the real personas of
+Northstar Corp, the fictional demo organization — `devops-incident` is the scenario the
+[temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/) narrates:
 
 | Scenario | Agent | Owner | Negative persona |
 |---|---|---|---|

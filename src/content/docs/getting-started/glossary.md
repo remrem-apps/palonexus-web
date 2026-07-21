@@ -26,7 +26,7 @@ that resolves to a public key. PaloNexus uses two methods:
   new key). No blockchain is involved.
 
 **VC — Verifiable Credential.** A signed, tamper-evident claim about a subject. PaloNexus
-issues VCs as **JWT-VC** (a VC encoded as an EdDSA-signed JWT). Three kinds appear in these
+issues VCs as **JWT-VC** (a VC encoded as an EdDSA-signed JWT — JSON Web Token). Three kinds appear in these
 docs:
 
 - **Membership VC** — issued by the trust root to an agent, proving it is an enrolled member
@@ -242,7 +242,8 @@ it owns AI agents, delegation, task authorization, temporary elevation, and audi
 [IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model).
 
 **OIDC — OpenID Connect.** The OAuth 2.0-based authentication standard PaloNexus uses to
-integrate a workforce IdP for human sign-in and to verify tokens against the IdP's **JWKS**.
+integrate a workforce IdP for human sign-in and to verify tokens against the IdP's **JWKS**
+(JSON Web Key Set — the IdP's published signing keys).
 One of the standards that makes PaloNexus IdP-neutral. See
 [IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model).
 
@@ -277,8 +278,8 @@ a delegation's evidence into a short-lived, audience-bound JWT (`sub`=agent, `ac
 revoked or expired delegation; logged metadata-only. See
 [Enterprise IAM API](/docs/reference/enterprise-iam-api/).
 
-**Northstar.** The seeded demo organization (`org_id` `7gdgqfu5j0oo`) all examples and
-personas belong to.
+**Northstar.** The fictional, seeded demo organization (`org_id` `7gdgqfu5j0oo`) all
+examples and personas belong to.
 
 **Envoy.** The data-plane proxy at the gateway that runs `ext_authz` against `/authz`.
 

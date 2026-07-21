@@ -58,7 +58,9 @@ agent = create_agent(model, tools=[guarded], middleware=[middleware(pn)])
 ```
 
 The decision is made against the **bound request context**, so run the agent inside a
-`pn.task(...)` block so the gate knows *who* the call is on behalf of:
+`pn.task(...)` block so the gate knows *who* the call is on behalf of. (The examples on this
+page use the docs' demo scenario: `devops-incident`, with `INC-4821` as the sample incident
+and personas from Northstar Corp, the fictional demo organization.)
 
 <!-- no-doctest: illustrative fragment — uses `agent` from a neighbouring block (not standalone-runnable) -->
 ```python
@@ -71,9 +73,11 @@ Tools you did *not* pass through `guarded_tool` are passed through ungoverned.
 
 ## Run it offline (deny vs approved)
 
-This is the shipped `examples/langchain_runbook_guard.py`, runnable with no network. A
-scripted model stands in for the LLM so the example exercises the **governance gate**, not a
-real model. (`_fake_model.py` ships alongside the example.)
+This is the shipped `examples/langchain_runbook_guard.py`, runnable with no network. It uses
+the demo-org personas: Ethan Park (the agent's owner), Maya Chen (the approver), and Claire
+Evans (the unauthorized negative persona). A scripted model stands in for the LLM so the
+example exercises the **governance gate**, not a real model. (`_fake_model.py` ships
+alongside the example.)
 
 ```python
 from langchain.agents import create_agent
@@ -163,5 +167,5 @@ agent = create_agent(model, tools=[guarded], middleware=[mw])
 
 ## Next
 
-- [LangGraph adapter](/docs/sdk/langgraph/) — governed nodes + HITL resume.
+- [LangGraph adapter](/docs/sdk/langgraph/) — governed nodes + human-in-the-loop (HITL) resume.
 - [Quickstart](/docs/getting-started/quickstart/) · [Glossary](/docs/getting-started/glossary/)

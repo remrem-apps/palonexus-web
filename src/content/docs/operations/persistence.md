@@ -17,7 +17,7 @@ identity and credential design it backs lives in
 
 > Canonical design: `docs/persistence-and-identity.md` in the platform repo.
 
-> Status: shipped and verified live on a managed Kubernetes cluster (DOKS example) with `REGISTRY_BACKEND=postgres` /
+> Status: shipped and verified live on a managed Kubernetes cluster (DigitalOcean Kubernetes, DOKS, example) with `REGISTRY_BACKEND=postgres` /
 > `IDP_STORE_BACKEND=postgres` (Postgres via CloudNativePG). Registry and
 > agent-idp store survive pod restarts.
 
@@ -60,9 +60,9 @@ document implementation; the rest share the SQL implementation.
 ## The `postgres` component (CloudNativePG)
 
 Production Postgres is provisioned by **CloudNativePG** (CNPG). The
-`deploy/kustomize/components/postgres/` component creates a `Cluster` CR per
+`deploy/kustomize/components/postgres/` component creates a `Cluster` custom resource (CR) per
 component (`palonexus`, `agent-idp`), each giving a managed primary+replica with a
-`*-rw` Service the apps point their `*_DB_URL` at, and patches the DSN in from the
+`*-rw` Service the apps point their `*_DB_URL` at, and patches the data source name (DSN) in from the
 generated `*-app` secret.
 
 Enable it from the selfhost overlay (install the CNPG operator first):

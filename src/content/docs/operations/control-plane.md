@@ -13,13 +13,14 @@ policy, audit, metrics — plus the egress decision for agent outbound calls.
 ## The authz spine
 
 Read `internal/authz/authz.go` first — it is the spine; every other package is a
-dependency of it. Envoy's HTTP `ext_authz` filter forwards each incoming request
+dependency of it. Envoy's HTTP external-authorization (`ext_authz`) filter forwards each incoming request
 to `/authz`; the handler runs, in order:
 
-1. **`identity.Verify`** — who (bearer JWT vs OIDC JWKS).
+1. **`identity.Verify`** — who (a bearer JSON Web Token, JWT, verified against the
+   OpenID Connect (OIDC) issuer's JSON Web Key Set, JWKS).
 2. **`registry.Get`** — what (resolve the target service from the
    `X-Palonexus-Service` header, falling back to Host).
-3. **`policy.Evaluate`** — may they (inline rules **then** OPA veto).
+3. **`policy.Evaluate`** — may they (inline rules **then** the Open Policy Agent (OPA) veto).
 4. **`audit.record`** — prove it (hash-chained record).
 5. **`metrics`** — observe it (count the decision).
 
@@ -30,7 +31,7 @@ the edge and never re-parse raw tokens. Any `403` is a deny.
 Agent **egress** calls take a parallel decision path. They are recognised by the
 `X-Palonexus-Actor` / `-On-Behalf-Of` / `-Task` / `-Target-Kind` headers (set by
 the agent's middleware); the egress evaluator adds agent-specific gates
-(allowlist, budget, delegation/TBAC) on top of the same deny-overrides shape. See
+(allowlist, budget, delegation / task-based access control, TBAC) on top of the same deny-overrides shape. See
 [Credential-safe action enforcement](/docs/operations/egress-enforcement-ops/) and the
 [concept page](/docs/concepts/egress-enforcement/).
 
@@ -43,7 +44,7 @@ the agent's middleware); the egress evaluator adds agent-specific gates
 | `internal/registry` | service registry + pluggable `Store` backend factory (`NewStore`) |
 | `internal/policy` | inline rules + OPA veto (`NewEngine`); egress evaluator |
 | `internal/delegation` | delegation/TBAC verifier over HTTP to the agent-idp |
-| `internal/agentid` | verifies agent Verifiable Presentations via the agent-idp (`POST /v1/agents/verify-presentation`) |
+| `internal/agentid` | verifies agent Verifiable Presentations (VPs) via the agent-idp (`POST /v1/agents/verify-presentation`) |
 | `internal/audit` | tamper-evident hash-chained audit log |
 | `internal/metrics` | Prometheus counters/histograms |
 | `internal/egressproxy` | the `:9092` forward proxy (CONNECT tunnel + reverse-proxy) |
@@ -85,7 +86,7 @@ generally mean "feature off / fail-closed default".
 | `AGENT_IDP_URL` | *(empty)* | agent-idp base URL. Enables VP verification, the delegation verifier, and the egress proxy. Empty → regulated egress needs approval (fail-closed) |
 | `AGENT_IDENTITY_MODE` | `header` | `header` trusts `X-Palonexus-Actor` (verifies a VP if present); `vc` **requires** a verified VP |
 | `REGISTRY_BACKEND` | *(empty → `memory`)* | registry store backend: `memory` / `postgres` / `mysql` / `sqlite` / `mongodb` |
-| `REGISTRY_DB_URL` | *(empty)* | DSN for the chosen registry backend |
+| `REGISTRY_DB_URL` | *(empty)* | data source name (DSN) for the chosen registry backend |
 | `REGISTRY_DB_TABLE` | *(empty → default)* | table/collection name override |
 | `REGISTRY_DB_DATABASE` | *(empty → default)* | database name override |
 
@@ -130,6 +131,6 @@ SQL backends compiled in). It `EXPOSE`s `9191` and `8181`.
 - **Tamper-evident audit.** Each record hash-chains to its predecessor; editing
   or deleting an entry breaks the chain (guarded by the `audit_test.go` chain
   test).
-- **Regulated egress without an IdP fail-closed.** With `AGENT_IDP_URL` unset, the
+- **Regulated egress without an identity provider (IdP) fail-closed.** With `AGENT_IDP_URL` unset, the
   egress evaluator keeps its `deny + NeedsApproval` default for regulated targets,
   and the egress proxy doesn't even start.

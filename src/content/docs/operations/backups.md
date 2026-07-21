@@ -16,8 +16,8 @@ up, how, and a restore drill that ends in a chain-verify.
 | **Audit hash-chain** | control-plane audit store (Loki for the shipped shipper; or the persisted audit log) | Tamper-evidence + the system of record for every decision. **Highest priority.** |
 | **Registry** | `REGISTRY_DB_URL` (Postgres/…) | Which services/agents exist and their `requireScope`/allowlist/budget. Re-creatable from your declarative source, but back it up to avoid a re-seed. |
 | **agent-idp store** | `IDP_DB_URL` | Agent provisioning, delegations, **revocations / StatusList**. Losing revocation state could resurrect a revoked credential — back it up. |
-| **LangGraph checkpointer** | `PALONEXUS_AGENT_DB_URL` | In-flight HITL threads (paused approvals). Lose it and paused runs can't resume. |
-| **Issuer key** | `agent-idp` secret | Not "data" but **must** survive — without it every issued VC fails to verify. Handle via [Secrets](/docs/operations/secrets/), back up in your secret manager. |
+| **LangGraph checkpointer** | `PALONEXUS_AGENT_DB_URL` | In-flight human-in-the-loop (HITL) threads (paused approvals). Lose it and paused runs can't resume. |
+| **Issuer key** | `agent-idp` secret | Not "data" but **must** survive — without it every issued Verifiable Credential (VC) fails to verify. Handle via [Secrets](/docs/operations/secrets/), back up in your secret manager. |
 
 ## The audit chain is the crown jewel
 
@@ -35,13 +35,13 @@ python -c "from palonexus import PaloNexus; print(PaloNexus.from_env().audit.ver
 
 In the shipped stack the chain is hash-chained JSON on the control-plane stdout, tailed by the
 audit-shipper DaemonSet into **Loki** (`service.name=control-plane-audit`). Back up by either
-snapshotting Loki's storage, or by streaming the audit log to durable object storage (e.g. DO
-Spaces) with retention. If you run a persisted audit store, back that up like any DB.
+snapshotting Loki's storage, or by streaming the audit log to durable object storage (e.g.
+DigitalOcean Spaces) with retention. If you run a persisted audit store, back that up like any DB.
 
 ## Backing up the databases
 
 With the [`postgres` component](/docs/operations/persistence/#the-postgres-component-cloudnativepg)
-(CloudNativePG), use CNPG's native backups — scheduled base backups + WAL archiving to object
+(CloudNativePG, CNPG), use CNPG's native backups — scheduled base backups + WAL archiving to object
 storage give point-in-time recovery:
 
 ```yaml

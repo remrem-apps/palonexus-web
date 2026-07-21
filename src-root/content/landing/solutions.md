@@ -20,10 +20,10 @@ cards:
       Approved actions receive the minimum credential needed — bound to the task and
       delegation, expiring in minutes. Agents and sandboxes never hold durable secrets.
     items:
-      - Short-lived runtime credentials (STS)
+      - Short-lived runtime credentials via a security token service (STS)
       - Task- & delegation-bound issuance
       - Cloud & SaaS token connectors (planned)
-      - MCP credential injection (planned)
+      - Model Context Protocol (MCP) credential injection (planned)
   - kicker: PaloNexus Lifecycle
     title: Authority that ends when the human context changes
     description: >-

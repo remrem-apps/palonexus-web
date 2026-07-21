@@ -24,7 +24,7 @@ that north-south capability is the foundation egress is built on, not the headli
 and metrics converge there (`internal/authz/authz.go`); everything else is a dependency of that
 one decision. PaloNexus is built **deny-by-default** and **audit-by-construction**: recording
 the decision *is* the audit step in the same code path that makes it. And PaloNexus sits
-**beside** your workforce IdP, not in front of it: it never holds your employees' credentials,
+**beside** your workforce identity provider (IdP), not in front of it: it never holds your employees' credentials,
 and it acts on agent egress only when a human has delegated authority for a specific,
 time-boxed task.
 
@@ -61,7 +61,7 @@ flowchart LR
   authz -->|stamped subject + actor out| out
 ```
 
-*Trust boundaries: OIDC tokens enter from the IdP, agent egress presents a Verifiable Presentation
+*Trust boundaries: OpenID Connect (OIDC) tokens enter from the IdP, agent egress presents a Verifiable Presentation (VP)
 plus a delegation through the proxy, the control plane verifies identity against agent-idp, and only
 a trusted, stamped subject and actor cross to the target. Credentials never leave the IdP, and
 agents have no path out except the proxy.*
@@ -74,11 +74,11 @@ allow.
 
 | Surface | What is checked | Failure mode |
 |---|---|---|
-| **Human token** | OIDC JWT validated against the IdP's JWKS (`OIDC_ISSUER` / `OIDC_AUDIENCE` / `OIDC_JWKS_URL`), required scope present verbatim | deny — missing/invalid token or scope |
+| **Human token** | OIDC JSON Web Token (JWT) validated against the IdP's JSON Web Key Set (JWKS) (`OIDC_ISSUER` / `OIDC_AUDIENCE` / `OIDC_JWKS_URL`), required scope present verbatim | deny — missing/invalid token or scope |
 | **Agent identity** | In `vc` mode, a fresh holder-signed **Membership VP** over audience + nonce, proven `did:key` mapped to the registered agent name | deny — `verified agent credential required`; actor-header mismatch denies |
-| **Delegation (TBAC)** | A human-approved, time-boxed Delegation VC scoped to (actor, task, action, resource) for regulated targets | deny / needs-approval — missing or expired delegation |
+| **Delegation (TBAC)** | A human-approved, time-boxed Delegation Verifiable Credential (VC) — task-based access control (TBAC) — scoped to (actor, task, action, resource) for regulated targets | deny / needs-approval — missing or expired delegation |
 | **Revocation** | Membership and Delegation `vcJti` re-checked against the StatusList on **every** call | deny — `CredentialRevoked`, in under a second after revoke |
-| **Policy** | Inline registry rules (public? scope? allowlisted? under budget?) then an **OPA** deny-overrides veto over org Rego | deny — inline or OPA deny; unreachable OPA fails closed |
+| **Policy** | Inline registry rules (public? scope? allowlisted? under budget?) then an **Open Policy Agent (OPA)** deny-overrides veto over org Rego | deny — inline or OPA deny; unreachable OPA fails closed |
 | **Budget** | Per-agent rolling ceilings (calls/hour, tokens/hour, USD/day) from broker usage callbacks | deny — over budget |
 | **Audit chain** | Each record hash-chains to its predecessor; `/v1/audit/verify` recomputes the chain | tamper detected — names the first broken sequence |
 
@@ -110,7 +110,7 @@ When the decision point cannot get a **trustworthy yes**, it denies — it never
 | a durable DB backend misconfigured at startup | the process **exits** rather than silently falling back to in-memory (would lose registrations/delegations/revocations) |
 | the control plane itself, from the SDK | raises [`ControlPlaneUnavailable`](/docs/getting-started/quickstart/) — never a silent allow |
 
-This is a deliberate design choice: an IAM product that "allows on error" is worse than none.
+This is a deliberate design choice: an identity-and-access-management (IAM) product that "allows on error" is worse than none.
 
 ### 3. Policy is deny-overrides
 
@@ -168,7 +168,7 @@ place to reason about access:
   NetworkPolicy + admission webhook), so it holds for *any* framework, not just cooperating SDK
   code. See [Credential-safe action enforcement](/docs/concepts/egress-enforcement/).
 - **Ingress** (north-south): `client → gateway → /authz → upstream`. Envoy's
-  [`ext_authz`](/docs/getting-started/glossary/) filter routes every request through the *same*
+  external-authorization ([`ext_authz`](/docs/getting-started/glossary/)) filter routes every request through the *same*
   `/authz` before it reaches a service (the keystone, `SecurityPolicy.extAuth`). This is the
   foundation egress is built on, not the MVP headline.
 
@@ -186,7 +186,8 @@ service is named by `X-Palonexus-Service` (set by the HTTPRoute), falling back t
 For regulated work an agent never acts **as itself**: it acts
 **[on-behalf-of](/docs/getting-started/glossary/)** a human subject, and the audit
 records both actor and subject. Authorization is **[task-based](/docs/getting-started/glossary/)**
-(TBAC): a delegation is granted for one task (e.g. `INC-4821`), time-boxed, and the agent does
+(TBAC): a delegation is granted for one task (e.g. `INC-4821`, the sample incident used in these
+docs' demo scenario), time-boxed, and the agent does
 not retain the privilege afterward.
 
 ## Cryptographic, revocable agent identity
@@ -237,8 +238,8 @@ passwords or credentials — those stay with your IdP. Secrets are **never baked
 | **Registry** (services, agents, models, tools, allowlists, budgets, ownership) | control-plane store (`REGISTRY_DB_URL`) | Config / metadata — no end-user credentials | Operational; re-creatable from declarative source |
 | **agent-idp store** (provisioned agents, delegations, revocations / StatusList) | agent-idp store (`IDP_DB_URL`) | Identity metadata; losing revocation state could resurrect a revoked credential | Operational; back up so revocation survives |
 | **Audit hash-chain** | control-plane audit store → Loki / durable object storage | Decision system-of-record (metadata: actor, subject, target, outcome, reason, hash) — **not** payloads | Set to your regulatory window; the long-term artifact |
-| **LangGraph checkpointer** | `PALONEXUS_AGENT_DB_URL` | In-flight HITL thread state (paused approvals) | Operational; needed to resume paused runs |
-| **Issuer key** | `agent-idp` Secret, from a secret manager | High — signs every VC/STS | Must be stable; never rotated as part of a code upgrade |
+| **LangGraph checkpointer** | `PALONEXUS_AGENT_DB_URL` | In-flight human-in-the-loop (HITL) thread state (paused approvals) | Operational; needed to resume paused runs |
+| **Issuer key** | `agent-idp` Secret, from a secret manager | High — signs every VC and Security Token Service (STS) token | Must be stable; never rotated as part of a code upgrade |
 | **Workforce passwords / credentials** | **Not stored — held by your IdP** | n/a | n/a |
 
 The audit trail records decision **metadata** (who, on behalf of whom, against what target, the
@@ -260,7 +261,7 @@ checklist, and keep components within the supported set in the
 - **`AGENT_IDENTITY_MODE=vc`** — a verified Membership VP is mandatory; header-only egress denied.
 - **OPA org veto** — `OPA_URL` set, deny-overrides, fails closed when unreachable.
 - **NetworkPolicy egress-only-to-proxy** — agents reach only DNS, agent-idp, and the proxy.
-- **Postgres-backed** durable registry + agent-idp store (CNPG), so revocation survives restarts.
+- **Postgres-backed** durable registry + agent-idp store (CloudNativePG — CNPG), so revocation survives restarts.
 - **Audit retention** — ship the hash-chained audit to durable storage with a retention window.
 - **External Secrets** — no secret in any image; deliver via External Secrets / sealed-secrets.
 
@@ -298,11 +299,11 @@ status.
 
 | Control objective | How PaloNexus supports it | Status |
 |---|---|---|
-| **Least privilege / JIT access** | Task-based access (TBAC): delegations are human-approved, time-boxed to one task, and not retained after | Shipped |
+| **Least privilege / just-in-time (JIT) access** | Task-based access (TBAC): delegations are human-approved, time-boxed to one task, and not retained after | Shipped |
 | **Complete, tamper-evident audit trail** | Every decision is a hash-chained record; `/v1/audit/verify` proves integrity | Shipped |
 | **Separation of duties** | Agent ownership governance requires an accountable owner; delegation approval requires a human with real authority (owner ≠ approver, or logged break-glass) | Shipped |
 | **Deny-by-default / fail-closed** | The default answer is deny; unreachable dependencies deny rather than allow | Shipped |
-| **Identity lifecycle (joiner/mover/leaver)** | SCIM directory sync + revocation cascade auto-suspends agents and invalidates delegations on a leaver | Shipped |
+| **Identity lifecycle (joiner/mover/leaver)** | System for Cross-domain Identity Management (SCIM) directory sync + revocation cascade auto-suspends agents and invalidates delegations on a leaver | Shipped |
 | **Key management (issuer key)** | Issuer key delivered out-of-band via a secret manager; **KMS/HSM-backed key + automated rotation** is on the roadmap | Partial |
 | **WORM / retention-locked audit sink** | Audit ships to durable storage today; a **retention-locked object store** for WORM durability is on the roadmap | Partial |
 | **Formal attestation (SOC 2 / ISO 27001)** | The control objectives above are designed-for; no certification is claimed | Roadmap — not attained |

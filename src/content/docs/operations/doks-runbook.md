@@ -6,7 +6,7 @@ sidebar:
 ---
 
 :::note[Cluster-agnostic]
-These steps work on **any** Kubernetes — kind, EKS, GKE, on-prem, DOKS. DOKS is
+These steps work on **any** Kubernetes — kind, EKS, GKE, on-prem, DigitalOcean Kubernetes (DOKS). DOKS is
 the worked example here; substitute your cluster's kubeconfig/context. PaloNexus
 does not depend on DigitalOcean.
 :::
@@ -24,7 +24,7 @@ order with the right prerequisites:
 
 :::tip[The 30-minute target]
 The clock assumes the **container images already exist** in a registry the
-cluster can pull (`ghcr.io/palonexus/*` or your DOCR). Building+pushing ten
+cluster can pull (`ghcr.io/palonexus/*` or your DigitalOcean Container Registry, DOCR). Building+pushing ten
 multi-arch images from cold is *not* in the 30 minutes — see
 [What can blow the 30-minute budget](#what-can-blow-the-30-minute-budget).
 :::
@@ -47,9 +47,9 @@ authority-bound-agent demo on the selfhost overlay:
 | Secret / env | Namespace | Consumed by | Required for | Default if absent |
 |---|---|---|---|---|
 | `model-broker-secrets` → `OPENAI_API_KEY` | `palonexus` | model-broker | a real **allowed** model call to return 200 | broker won't serve model calls (deploy still succeeds) |
-| `agent-idp-issuer` → `ISSUER_PRIVATE_KEY_B64` | `agent-idp` | agent-idp | stable VC/STS signing across restarts | ephemeral dev key, warns (VCs break on restart) |
+| `agent-idp-issuer` → `ISSUER_PRIVATE_KEY_B64` | `agent-idp` | agent-idp | stable Verifiable Credential (VC) / Security Token Service (STS) signing across restarts | ephemeral dev key, warns (VCs break on restart) |
 | `logto-m2m` (5 keys, see below) | `palonexus` | portal seed surface | seed-from-UI against a live Logto tenant | portal seed falls back to file/offline mode (`optional: true`, never crash-loops) |
-| `agent-db` → `uri` | `apps` | the agent pods | a durable LangGraph checkpointer (HITL approval survives restarts) | `MemorySaver` (HITL still works in-process) |
+| `agent-db` → `uri` | `apps` | the agent pods | a durable LangGraph checkpointer (human-in-the-loop, HITL, approval survives restarts) | `MemorySaver` (HITL still works in-process) |
 
 The `logto-m2m` Secret carries the five keys the portal's `/settings/logto` +
 `/settings/seed` surfaces read (`envConnection()`): `LOGTO_BASE_URL`,
@@ -77,8 +77,8 @@ those images ship so the runbook stays one source of truth:
 
 | Env / secret | Where | Enables | Notes |
 |---|---|---|---|
-| `SIMULATE_OPERATOR_TOKEN` | control-plane (`palonexus`) | the `/authz` **dry-run** ("Live decision" policy simulator) | **Empty = disabled / fail-closed.** When set, every dry-run must carry a matching `X-Palonexus-Simulate-Operator` header. The portal `/simulate` BFF must hold the *same* token server-side. (REM-136 / REM-160) |
-| `SEED_LOGTO_DIR` (+ `nsr_seeder` on `PYTHONPATH`) | agent-idp (`agent-idp`) | the `POST /v1/authority/preview` ("Authority preview" mode) | agent-idp resolves the seed package + Northstar manifests from `SEED_LOGTO_DIR` (default `<repo>/seed-logto`); **unavailable → 503, fail-closed**, never a guess. The portal image already mounts the seed tree at `/opt/seed-logto`. |
+| `SIMULATE_OPERATOR_TOKEN` | control-plane (`palonexus`) | the `/authz` **dry-run** ("Live decision" policy simulator) | **Empty = disabled / fail-closed.** When set, every dry-run must carry a matching `X-Palonexus-Simulate-Operator` header. The portal `/simulate` backend-for-frontend (BFF) must hold the *same* token server-side. (REM-136 / REM-160) |
+| `SEED_LOGTO_DIR` (+ `nsr_seeder` on `PYTHONPATH`) | agent-idp (`agent-idp`) | the `POST /v1/authority/preview` ("Authority preview" mode) | agent-idp resolves the seed package + Northstar (the fictional demo org) manifests from `SEED_LOGTO_DIR` (default `<repo>/seed-logto`); **unavailable → 503, fail-closed**, never a guess. The portal image already mounts the seed tree at `/opt/seed-logto`. |
 | `logto-m2m` (above) + `ALLOW_LOGTO_SEED=true` | portal (`palonexus`) | portal seed-from-UI | already wired by `components/portal-seed-logto`. |
 | **TODO** API-keys / tenant env (`PALONEXUS_API_KEY`, `pn_live_…`/`pn_test_…`; tenant `org_id` defaults) | agent-idp `/v1/keys` (new) + portal `/settings/keys`, `/settings/tenant` | SDK key auth + tenant registration defaults | **Not yet final** — the keys+tenant wave (REM-161) is in flight; its storage/env (the new agent-idp keys endpoint backing store) is not landed. Treat this row as a placeholder and reconcile against REM-161's Linear callouts before the batched rollout. |
 
@@ -96,7 +96,7 @@ those images ship so the runbook stays one source of truth:
 | | **Total** | **~30 min** | an authority-bound agent + a denied→approved call |
 
 The flow below is the same six steps as a dependency graph: nothing reconciles
-until the Gateway API + Envoy Gateway CRDs exist (Step 1 gates everything that
+until the Gateway API + Envoy Gateway Custom Resource Definitions (CRDs) exist (Step 1 gates everything that
 follows), seeding gives the governed call real personas to decide against, and the
 path ends at the three verdicts plus a verifiable audit row — the proof the spine
 is live.
@@ -210,7 +210,7 @@ The `selfhost` overlay is the cluster-agnostic production overlay: it deploys th
 whole control layer, runs the egress decision in anonymous-passthrough (registry
 + policy + delegation still fully enforce), and wires the portal seed component.
 
-Point the images at your registry, then apply. The OPA Rego ConfigMap is
+Point the images at your registry, then apply. The Open Policy Agent (OPA) Rego ConfigMap is
 generated from the repo-root `policy/rego/authz.rego`, so you must allow loading
 files outside the kustomization dir (`LoadRestrictionsNone`):
 
@@ -266,9 +266,10 @@ Seeding the demo identity model is **Logto-specific to the reference demo** and 
 **not required** to stand up an authority-bound agent — the authority-bound-agent path itself needs
 no Logto. This step exists only to load the Northstar **demo** personas so the
 allow/deny/needs-approval verdicts have realistic subjects to decide against. A
-**"bring-your-own IdP"** deployment skips this and connects its own OIDC/SCIM
-workforce IdP (Okta, Microsoft Entra ID, Auth0, Ping, Google Workspace, Amazon
-Cognito, Keycloak, Logto, …) instead — see
+**"bring-your-own IdP"** deployment skips this and connects its own OpenID Connect (OIDC) /
+SCIM (System for Cross-domain Identity Management)
+workforce identity provider (IdP) — Okta, Microsoft Entra ID, Auth0, Ping, Google Workspace, Amazon
+Cognito, Keycloak, Logto, … — instead; see
 [IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model).
 :::
 
@@ -333,10 +334,10 @@ kubectl -n apps rollout status deploy/<agent-name> --timeout=180s
 kubectl -n apps get pod -l app=<agent-name>     # 2/2 Ready (agent + egress sidecar)
 ```
 
-The four demo SRE agents (`incident-triage`, `access-broker`, `diagnostics`,
+The four demo site-reliability-engineering (SRE) agents (`incident-triage`, `access-broker`, `diagnostics`,
 `remediation`) ship in the base and are a working reference — the
-`devops-incident` scenario (agent `northstar-devops-incident-agent`, owner Ethan,
-sponsor/approver Maya) is the one this runbook verifies below.
+`devops-incident` demo scenario (agent `northstar-devops-incident-agent`, owner Ethan Park,
+sponsor/approver Maya Chen — the demo-org personas) is the one this runbook verifies below.
 
 ## Step 6 — Verify a governed allow / deny / needs-approval
 
@@ -362,7 +363,7 @@ interrupts for human approval:
 1. The agent calls the regulated tool → `/authz` returns **needs-approval**; the
    middleware raises a LangGraph `interrupt()` and a delegation request appears in
    the portal **Approvals** surface.
-2. The approver (e.g. Maya, `org:agents:approve`) approves; the console resumes the
+2. The approver (e.g. Maya Chen, `org:agents:approve`) approves; the console resumes the
    run via `Command(resume=...)`.
 3. The agent re-issues the call carrying the Delegation VC → **allowed (200)**.
 4. The whole run is reconstructable from the hash-chained audit
@@ -417,7 +418,7 @@ Be explicit about the real-cluster risks; none are in the happy-path timings:
   never on the path — every later step looks broken.
 - **Stable issuer key.** Without `agent-idp-issuer`, agent-idp mints an ephemeral
   key; a restart invalidates every previously-issued VC mid-demo.
-- **CNI NetworkPolicy support.** DOKS (Cilium) enforces NetworkPolicy, so the
+- **Container Network Interface (CNI) NetworkPolicy support.** DOKS (Cilium) enforces NetworkPolicy, so the
   proxy-only egress lockdown is real — unlike kind's default kindnet where it's
   advisory. Good for fidelity; budget a moment to confirm the netpols applied.
 
@@ -425,7 +426,7 @@ Be explicit about the real-cluster risks; none are in the happy-path timings:
 
 - [Terraform / DOKS](/docs/operations/terraform-doks/) — provision the cluster + DOCR + VPC.
 - [Self-hosting](/docs/operations/self-hosting/) — the overlay + opt-in hardening components.
-- [Secrets](/docs/operations/secrets/) — the never-in-image secret catalog and ESO/sealed-secrets.
+- [Secrets](/docs/operations/secrets/) — the never-in-image secret catalog and External Secrets Operator (ESO)/sealed-secrets.
 - [Credential-safe action enforcement (ops)](/docs/operations/egress-enforcement-ops/) — the proxy, proxy-only netpols, admission webhook.
 - The `deploy-langgraph-agent-to-palonexus` skill — the agent-deployment workflow Step 5 reuses.
 </content>

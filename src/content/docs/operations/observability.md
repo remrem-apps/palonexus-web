@@ -12,20 +12,20 @@ converging on one pod.
 ## Grafana LGTM (single binary)
 
 `base/observability/lgtm.yaml` runs `grafana/otel-lgtm` — **Grafana + Prometheus +
-Tempo + Loki + a built-in OTel Collector in one pod**, sized for a 2vCPU/4GB node.
+Tempo + Loki + a built-in OpenTelemetry (OTel) Collector in one pod**, sized for a 2vCPU/4GB node.
 It lives in the `observability` namespace with a PVC for persistence and
 provisioning ConfigMaps (datasources + the dashboard).
 
 Three telemetry sources converge on it:
 
 - **App traces/logs** (agent-idp, runbooks-api, the agents) ship OTLP directly to
-  `lgtm:4317`. They set DID/VC span attributes — `did`, `vcJti`, `task`,
+  `lgtm:4317`. They set Decentralized Identifier / Verifiable Credential (DID/VC) span attributes — `did`, `vcJti`, `task`,
   `action`, `decision` — so a verifiable-credential-scoped agent action can be
   followed end to end. Python services emit OTLP only when
   `OTEL_EXPORTER_OTLP_ENDPOINT` is set (via the `otel-telemetry-env` ConfigMap);
   otherwise they log spans to stdout and never crash.
 - **Control-plane metrics** are scraped by the standalone OTel Collector (it owns
-  the Prometheus service-discovery RBAC) and remote-written into LGTM's Prometheus.
+  the Prometheus service-discovery (SD) RBAC) and remote-written into LGTM's Prometheus.
 - **Audit** (hash-chained JSON on the control-plane stdout) is tailed by the
   audit-shipper DaemonSet and pushed to LGTM's Loki, tagged
   `service.name=control-plane-audit`.
@@ -60,7 +60,7 @@ Exposed by the control plane on the management plane (`MGMT_ADDR`, `:8181`) at
 |---|---|---|
 | `palonexus_authz_decisions_total` | counter | allow/deny decisions, labelled by `service`/`decision`/`rule` (the deny *stage*) |
 | `palonexus_authz_duration_seconds` | histogram | end-to-end decision latency (default buckets) |
-| `palonexus_authz_stage_duration_seconds` | histogram | **per-stage** egress decision latency, labelled by `stage` = `identity`\|`registry`\|`policy` — shows *where* the time goes (VP crypto, lookups, the delegation/OPA hop) |
+| `palonexus_authz_stage_duration_seconds` | histogram | **per-stage** egress decision latency, labelled by `stage` = `identity`\|`registry`\|`policy` — shows *where* the time goes (verifiable-presentation (VP) crypto, lookups, the delegation / Open Policy Agent (OPA) hop) |
 | `palonexus_token_usage_total` | counter | per-agent LLM token consumption, reported by the model-broker |
 | `palonexus_agent_cost_usd_total` | counter | per-agent spend in USD, reported by the model-broker |
 

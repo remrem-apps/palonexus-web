@@ -16,7 +16,7 @@ Integrations attach that decision in one of **three enforcement modes**: in **go
 tool mode**, PaloNexus wraps or hosts the tool so credentials never reach the agent (this
 is how the [LangChain](/docs/sdk/langchain/), [LangGraph](/docs/sdk/langgraph/), and
 [Deep Agents](/docs/sdk/deep-agents/) adapters work); in **token exchange mode**, PaloNexus
-issues an ephemeral, scoped credential to a trusted runtime component (the STS in
+issues an ephemeral, scoped credential to a trusted runtime component (the Security Token Service (STS) in
 [Connect agents to enterprise authority](/docs/concepts/enterprise-iam/)); and in **egress gateway mode**, the
 agent's outbound request traverses a PaloNexus gateway that authorizes it and injects
 credentials after the untrusted boundary (today's
@@ -31,7 +31,7 @@ one implementation of this mode).
 | [LangGraph](/docs/sdk/langgraph/) | `governed_node` gates a graph node; deny → interrupt → human approval → resume | **Available** — SDK adapter |
 | [Deep Agents](/docs/integrations/deep-agents-sandboxes/) | `tool_guard` + `governance_middleware` + the shipped `palonexus-governance` skill | **Available** — SDK adapter |
 | [Agent-to-agent (A2A) delegation](/docs/integrations/a2a-delegation/) | The A2A hop is itself gated at `/authz` and carries the original on-behalf-of human subject | **Available** — recipe |
-| [kagent](/docs/integrations/kagent/) | Register kagent-deployed agents, resolve owners, gate tool/MCP calls, inject short-lived credentials | **Planned** — design preview |
+| [kagent](/docs/integrations/kagent/) | Register kagent-deployed agents, resolve owners, gate tool and Model Context Protocol (MCP) calls, inject short-lived credentials | **Planned** — design preview |
 | [Kubernetes Agent Sandbox](/docs/integrations/agent-sandbox/) | No standing credentials in the sandbox; egress restricted to a PaloNexus gateway | **Planned** — design preview |
 | [OpenAI Agents SDK](/docs/integrations/openai-agents/) | Harness hooks call PaloNexus before sensitive operations; secrets stay outside the sandbox | **Planned** — design preview |
 | [MCP gateway](/docs/integrations/mcp/) | A governed gateway between agents and MCP servers, authorizing and credentialing each tool call | **Planned** — design preview |

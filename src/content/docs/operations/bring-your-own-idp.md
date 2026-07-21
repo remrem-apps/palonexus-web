@@ -5,16 +5,17 @@ sidebar:
   order: 4
 ---
 
-PaloNexus governs **agent egress** with cryptographic agent identity (DID/VC) that does
-**not** depend on your IdP — egress works out of the box. This page is for the *other*
+PaloNexus governs **agent egress** with cryptographic agent identity (Decentralized
+Identifier / Verifiable Credential, DID/VC) that does
+**not** depend on your identity provider (IdP) — egress works out of the box. This page is for the *other*
 identity seam: **human workforce sign-in** (the people who own agents, approve elevations,
 and operate the portal). The self-host overlay ships **anonymous-passthrough** by default;
 this runbook wires *your* IdP so the control plane verifies inbound human identity against
 your issuer.
 
 **Logto is the first supported IdP** — the worked example below. Okta, Entra ID, Auth0,
-Keycloak, and any standard OIDC provider integrate through the **same** three env vars and
-the same SCIM `/v1/directory` seam; only the issuer URLs differ. Others are near-term
+Keycloak, and any standard OpenID Connect (OIDC) provider integrate through the **same** three env vars and
+the same SCIM (System for Cross-domain Identity Management) `/v1/directory` seam; only the issuer URLs differ. Others are near-term
 roadmap for *shipped connectors*, not a limitation of the standards path.
 
 :::note[Two identity planes, decoupled]
@@ -42,7 +43,7 @@ Secret.
    This identifier is your `OIDC_AUDIENCE` — access tokens must carry it as `aud`.
 2. **Create an application** for the human sign-in surface (the portal / your SSO front
    door). Note its issuer is the tenant's `/oidc` endpoint above.
-3. Grab the **issuer** and **JWKS** URLs from the tenant's OIDC discovery
+3. Grab the **issuer** and **JWKS** (JSON Web Key Set) URLs from the tenant's OIDC discovery
    (`https://YOUR-TENANT.logto.app/oidc/.well-known/openid-configuration`).
 
 > Any OIDC IdP: register an app + an API/audience, then read `issuer` and `jwks_uri` from
@@ -74,7 +75,7 @@ kubectl apply -k deploy/kustomize/overlays/selfhost --load-restrictor LoadRestri
 kubectl -n palonexus rollout status deploy/control-plane
 ```
 
-The control plane now verifies inbound bearer JWTs against your IdP's JWKS, requiring
+The control plane now verifies inbound bearer JSON Web Tokens (JWTs) against your IdP's JWKS, requiring
 `iss == OIDC_ISSUER` and `OIDC_AUDIENCE ∈ aud`. A token from your IdP is accepted; anything
 else is denied (fail-closed). Egress decisions are unchanged.
 

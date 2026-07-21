@@ -10,7 +10,11 @@ the registry, approving an egress hold, or onboarding an agent — and you need 
 method, path, body, and status code. It's the complete HTTP contract for every plane, so you
 can integrate without reading the source.
 
-The contracts are grouped by plane. All bodies are JSON unless noted. For the headers these
+The contracts are grouped by plane. All bodies are JSON unless noted. Short forms used
+throughout: `ext_authz` is Envoy's external-authorization hook; a verifiable presentation
+(VP) is an agent's signed wrapper around its Verifiable Credential (VC); TBAC is
+task-based access control; OPA is the Open Policy Agent; and a DID is a Decentralized
+Identifier. For the headers these
 endpoints read and stamp, see [Headers](/docs/reference/headers/).
 
 ## 1. The decision endpoint — `/authz`

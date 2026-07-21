@@ -14,8 +14,8 @@ The contract: Kubernetes injects `HTTPS_PROXY`/`HTTP_PROXY` pointing at the egre
 proxy (`egress-proxy.palonexus.svc`), and the pod's NetworkPolicy permits egress
 **only** to that proxy (plus DNS and agent-idp). So every outbound call is
 physically forced through `/authz`. These helpers make the agent's *legitimate*
-calls carry a verifiable identity; a raw `curl` (no VP) is denied by the proxy —
-which is the point.
+calls carry a verifiable identity; a raw `curl` (no verifiable presentation, VP) is
+denied by the proxy — which is the point.
 
 ## How a call is routed
 
@@ -69,7 +69,7 @@ with proxied_client(timeout=30.0) as c:
 
 A persistent client (e.g. the model client) would otherwise present a VP that
 expires mid-workflow. The long TTL is safe because the egress proxy **re-checks
-the Membership VC against the StatusList on every call** (agent-idp's
+the Membership Verifiable Credential (VC) against the StatusList on every call** (agent-idp's
 verify-presentation), so **revocation still cuts egress immediately**, regardless
 of VP expiry.
 
