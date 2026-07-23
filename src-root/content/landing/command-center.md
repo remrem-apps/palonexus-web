@@ -1,31 +1,24 @@
 ---
 section: command-center
-eyebrow: Authority command center
-heading: See every agent's authority in one place
+eyebrow: Observe — PaloNexus Command Center
+heading: Give security teams one view of agent authority and accountability.
 lede: >-
-  When your developers govern agents through the PaloNexus SDK, the platform
-  owner gets a single read surface over authority — every agent action answers
-  four questions on one screen: which agent acted, on whose authority, who
-  approved it, and what credential it carried.
+  When developers govern agents through the PaloNexus SDK and Control Plane,
+  security teams get one read surface over authority — every action answers
+  which agent acted, on whose authority, who approved it, and what policy context applied.
 points:
   - title: Every decision carries its authority reason
     text: >-
-      The live enforcement feed records why, not just what. A deny reads "no
-      approved delegation"; the allow that follows is bound to its task
-      (INC-4821) and to the authority-bound delegation that permitted it — with
-      the delegation's expiry counting down on screen.
+      The shipped portal records why, not just what: identity, owner, delegation,
+      policy context, outcome, and expiry are visible alongside the decision.
   - title: The authority trail proves its own integrity
     text: >-
-      Each decision record hash-chains to its predecessor, and the command
-      center verifies that chain live — the "Verifiable authority trail — chain
-      verified" strip means the evidence has been checked, not merely
-      asserted.
+      Each decision record is part of a verifiable audit trail so investigators
+      can distinguish checked evidence from an assertion.
   - title: Accountable ownership across the fleet
     text: >-
-      Governed and ungoverned counts, per-agent posture — active & healthy,
-      owner inactive, blocked — and agents grouped by accountable owner and by
-      department, joined live from your SCIM directory. When an owner leaves,
-      lifecycle-linked revocation shows up as a posture change, not a surprise.
+      Governed and ungoverned counts, per-agent posture, ownership, and lifecycle
+      revocation make changes visible instead of surprising.
 comingNext: >-
-  Coming next: brokered short-lived credentials for every allowed action.
+  Planned next: Policy Studio for version-controlled policy authoring and deployment.
 ---

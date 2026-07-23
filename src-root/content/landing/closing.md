@@ -1,9 +1,9 @@
 ---
 section: closing
-eyebrow: Retire the standing credentials
-heading: Put verified authority between your agents and production.
+eyebrow: Choose your deployment path
+heading: Start with the SDK. Enforce in your Control Plane. Observe every decision.
 cta:
-  label: Request Integration
+  label: Request access
   href: '/request-changes/'
 secondaryCta:
   label: Read the docs

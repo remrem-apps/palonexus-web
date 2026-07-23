@@ -1,46 +1,47 @@
 ---
 section: solutions
-heading: One authorization layer, packaged for how your agents reach production.
+eyebrow: One product. Three connected surfaces.
+heading: Integrate, enforce, and observe the authority behind every agent action.
 cards:
-  - kicker: PaloNexus Core
-    title: One authorization contract for every agent action
+  - kicker: PaloNexus SDK
+    title: Integrate — identity and scoped action requests
     description: >-
-      An agent registry with accountable human owners, task-scoped delegation and
-      approvals, and a deny-by-default policy engine — every decision recorded on a
-      verifiable authority trail.
+      Give developers and agent owners one integration contract for registration, identity
+      provisioning, scoped requests, and typed allow, deny, or approval-required outcomes.
     items:
-      - Agent registry & accountable owners
-      - Task-scoped delegations & approvals
-      - Deny-by-default policy engine
-      - Authority audit on every decision
-  - kicker: PaloNexus Access Broker
-    title: Short-lived credentials instead of standing secrets
+      - Agent registration and accountable ownership
+      - DID/VC identity provisioning and revocation
+      - Action context for task, resource, and duration
+      - Framework adapters without changing authorization semantics
+  - kicker: PaloNexus Control Plane
+    title: Enforce — policy, delegation, and revocation
     description: >-
-      Approved actions receive the minimum credential needed — bound to the task and
-      delegation, expiring in minutes. Agents and sandboxes never hold durable secrets.
+      Operate the policy, identity, delegation, approval, and revocation boundary in the
+      runtime you already run. Kubernetes and supported IdPs are current integrations,
+      not the product definition.
     items:
-      - Short-lived runtime credentials via a security token service (STS)
-      - Task- & delegation-bound issuance
-      - Cloud & SaaS token connectors (planned)
-      - Model Context Protocol (MCP) credential injection (planned)
-  - kicker: PaloNexus Lifecycle
-    title: Authority that ends when the human context changes
+      - Authorization decisions at the action boundary
+      - Human-backed delegation and lifecycle revocation
+      - Durable identity and authority controls
+      - Self-hosted Kubernetes deployment today
+  - kicker: PaloNexus Command Center
+    title: Observe — posture, approvals, and the authority trail
     description: >-
-      Workforce directory sync ties every agent to a live owner. Leavers, movers, and
-      ownership changes cascade into agent access — not just at the next audit.
+      Give security administrators and leaders one read surface for fleet posture, identity,
+      approvals, decisions, ownership, and the verifiable authority trail.
     items:
-      - Workforce directory sync (SCIM & OIDC)
-      - Joiner / mover / leaver revocation
-      - Owner transfer & orphan quarantine (planned)
-      - Access reviews & dormant-agent controls (planned)
-  - kicker: PaloNexus Enforcement
-    title: Runtime-neutral enforcement at boundaries you already have
+      - Shipped operator portal with approvals and audit investigation
+      - Identity, ownership, delegation, and revocation posture
+      - Policy Studio (planned authoring workspace)
+      - Cloud team Command Center (private beta)
+  - kicker: PaloNexus deployment paths
+    title: Local, Cloud Private Beta, or Self-hosted
     description: >-
-      Enforce the same authorization decision wherever agents act — in the SDK, at the
-      egress gateway, in the cluster. Keep your runtime; add accountable authorization.
+      Start locally, request access to a hosted team cell, or operate the same Control Plane
+      in your Kubernetes environment. One product, different deployment boundaries.
     items:
-      - Kubernetes egress gateway & Envoy ext_authz
-      - LangChain, LangGraph & Deep Agents adapters
-      - Agent-to-agent delegation
-      - kagent, Agent Sandbox, OpenAI Agents SDK & MCP (planned)
+      - Local Runtime for developer onboarding
+      - Cloud Beta for teams up to 10 (Request access)
+      - Self-hosted Kubernetes with supported IdPs
+      - Codex, Claude Code adapters, and Companion (planned)
 ---

@@ -1,20 +1,20 @@
 ---
 section: hero
-eyebrow: Agent authorization & accountability
+eyebrow: One product. Three connected surfaces.
 heading: Give AI agents authority without giving them standing access.
 lede: >-
-  PaloNexus makes sure an AI agent can act only with authority that a real person or
-  service owner was entitled to delegate—and only for the task, resource, and time
-  originally approved.
+  PaloNexus connects the developer SDK, the enforcement Control Plane, and the security
+  Command Center so every agent action is identity-aware, policy-checked, and attributable
+  to the human authority behind it.
 distinction:
-  - label: Agent runtimes
-    text: decide how an agent works.
-  - label: Sandboxes
-    text: decide where its code runs.
-  - label: PaloNexus
-    text: decides what it is authorized to do — and whose authority it is using.
+  - label: Integrate — SDK
+    text: for developers and agent owners to register agents, provision identity, and request scoped actions.
+  - label: Enforce — Control Plane
+    text: for platform operations to verify identity, evaluate policy, and issue short-lived authority.
+  - label: Observe — Command Center
+    text: for security teams and leaders to review approvals, posture, and the verifiable audit trail.
 primaryCta:
-  label: Request Integration
+  label: Request access
   href: '/request-changes/'
 secondaryCta:
   label: Read the docs

@@ -1,20 +1,19 @@
 ---
 section: platform
-eyebrow: Where PaloNexus sits
-heading: The authorization layer between your agents and your enterprise systems.
+eyebrow: Enforce — PaloNexus Control Plane
+heading: One enforcement contract across the systems your agents already use.
 columns:
   - title: Agents
     description: >-
-      Any runtime or sandbox — LangGraph, LangChain, Deep Agents, or your own — presenting
-      an agent identity, an accountable owner, and a task.
-  - title: PaloNexus
+      The SDK registers an agent, provisions its identity, and carries the human, task,
+      action, and resource context into every governed request.
+  - title: Control Plane
     description: >-
-      Authority directory, authorization decision service, and credential broker —
-      accountable ownership, authority-bound delegation, just-in-time access,
-      lifecycle-linked revocation, and a verifiable authority trail.
+      The shipped self-hosted Control Plane verifies identity, evaluates authorization,
+      manages delegation and revocation, and records the decision with fail-closed behavior.
   - title: Enterprise systems
     description: >-
-      Cloud providers, Kubernetes, source control, CI/CD, ticketing, data platforms, and
-      internal APIs — reached only with short-lived, scoped credentials.
-footer: 'Every result → verifiable authority trail'
+      Kubernetes, source control, CI/CD, data platforms, and internal APIs receive only
+      the scoped authority the active policy permits.
+footer: 'Every decision → a verifiable authority trail'
 ---
