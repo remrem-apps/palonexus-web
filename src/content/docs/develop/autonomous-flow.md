@@ -1,6 +1,6 @@
 ---
 title: The Autonomous Flow
-description: The full multi-agent hero flow — incident-triage reasons, the runbook is denied, it escalates A2A to the access-broker, a human approves a time-boxed delegation, and the DID/VC runbook read finally succeeds. Every hop decided at /authz.
+description: The full multi-agent, end-to-end governed flow — incident-triage reasons, the runbook is denied, it escalates A2A to the access-broker, a human approves a time-boxed delegation, and the DID/VC runbook read finally succeeds. Every hop decided at /authz.
 sidebar:
   order: 6
 ---
@@ -56,7 +56,7 @@ point is also a deny (`ControlPlaneUnavailable`), never a silent allow.*
 
 ### 1. incident-triage summarizes (model egress)
 
-Given an incident id from incy (the demo PagerDuty-style incident manager), the
+Given an incident id from incy (the sample PagerDuty-style incident manager), the
 agent's `summarize` node calls the LLM via the model
 broker. The model call goes through the localhost egress sidecar, which mints a
 Verifiable Presentation (VP) and forwards through the proxy — decided at `/authz` as
@@ -114,7 +114,7 @@ to the broker's own identity:
 rec = identity_mgr.request_delegation(
     task=state["task"], action=state["action"], resource=state["resource"],
     reason=state.get("reason", ""), ttl_seconds=state.get("ttl_seconds", 300),
-    actor_name=state["actor"],   # issue the VC to the actor we're brokering for
+    actor_name=state["actor"],   # issue the VC to the actor being brokered for
 )
 ```
 

@@ -81,7 +81,7 @@ re-runs creation harmlessly** — existing data is preserved, missing tables are
 
 The `deploy/kustomize/components/postgres/` component provisions a CloudNativePG (CNPG) `Cluster` per
 component (`palonexus`, `agent-idp`) and wires each data source name (DSN) in from the generated `*-app` secret —
-you don't create databases or write passwords by hand:
+no databases are created or passwords written by hand:
 
 ```yaml
 # deploy/kustomize/overlays/selfhost/kustomization.yaml
@@ -99,7 +99,7 @@ or SQLite to Postgres without losing state:
 
 1. **Quiesce writes** — scale the writer (control-plane / agent-idp) to read-only or pause
    registrations/approvals.
-2. **Export** the current store. For the registry, re-`POST` services from your source of truth
+2. **Export** the current store. For the registry, re-`POST` services from the source of truth
    (registrations are declarative); for agent-idp, dump and re-insert the JSON documents, or
    replay provisioning + delegations.
 3. **Re-point** `*_DB_URL` at Postgres and restart — tables are created on boot.

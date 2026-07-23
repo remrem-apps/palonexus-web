@@ -149,7 +149,7 @@ flowchart TD
 needs-approval/TBAC branch) → OPA deny-overrides veto, ending in allow, deny, or a held
 needs-approval.*
 
-You can dry-run this exact decision path before shipping a policy change. The portal's
+Dry-run this exact decision path before shipping a policy change. The portal's
 **Policy simulator** runs design-time authority previews and runtime-faithful live decisions
 against the real paths:
 
@@ -181,7 +181,7 @@ runbooks demo is one example), while a target with no server-side gate stays
 [Agent identity & credentials](/docs/concepts/identity-and-credentials/) for the
 cryptographic identity that underpins all of this.
 
-## The autonomous hero flow
+## The end-to-end governed flow
 
 End to end through the demo's real LangGraph agents: `incident-triage` summarizes (model call
 via its sidecar → `/authz`) → reads a runbook → **DENIED** → escalates agent-to-agent (A2A) to

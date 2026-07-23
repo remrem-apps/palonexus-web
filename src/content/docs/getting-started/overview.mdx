@@ -25,7 +25,7 @@ what either is allowed to do with real enterprise systems:
 | **Sandbox** | *Where its code runs* — isolated filesystems, command execution, workspace lifecycle | Kubernetes Agent Sandbox, E2B, Daytona, Modal |
 | **PaloNexus** | *What it is authorized to do and whose authority it is using* — accountable ownership, delegation, just-in-time credentials, revocation, authority trail | Works alongside all of the above |
 
-Keep your runtime and your sandbox — PaloNexus complements both. See
+Keep the existing runtime and sandbox — PaloNexus complements both. See
 [What PaloNexus is not](/docs/getting-started/what-palonexus-is-not/) for the honest
 category boundaries.
 
@@ -33,12 +33,12 @@ category boundaries.
   <LinkCard
     title="Quickstart"
     href="/docs/getting-started/quickstart/"
-    description="Ten minutes to your first authority-bound agent: register → denied by default → human-approved → succeed, fully offline. A second tab brings the whole platform up locally."
+    description="Ten minutes to a first authority-bound agent: register → denied by default → human-approved → succeed, fully offline. A second tab brings the whole platform up locally."
   />
   <LinkCard
     title="Temporary-elevation walkthrough"
     href="/docs/develop/guides/temporary-elevation-walkthrough/"
-    description="The INC-4821 hero flow — the sample incident used across these docs — end to end: a production action is denied, an entitled owner grants a time-boxed elevation, the call succeeds on their behalf, and access expires automatically."
+    description="The end-to-end governed flow, on a sample incident: a production action is denied, an entitled owner grants a time-boxed elevation, the call succeeds on their behalf, and access expires automatically."
   />
   <LinkCard
     title="Reference"
@@ -83,7 +83,7 @@ category boundaries.
 
 </Steps>
 
-The same loop in one picture — your workforce identity provider (IdP) owns your humans, PaloNexus owns your
+The same loop in one picture — the workforce identity provider (IdP) owns the humans, PaloNexus owns the
 agents, and one decision connects them:
 
 ```mermaid
@@ -96,7 +96,7 @@ flowchart LR
     Z -->|every decision| A[(Audit<br/>proves control)]
 ```
 
-*The PaloNexus control loop: your workforce IdP (Okta, Entra ID, Logto in the demo, …) owns
+*The PaloNexus control loop: the workforce IdP — Logto is the supported IdP — owns
 humans, PaloNexus owns agents, a human delegates task-scoped access, an approval turns a
 denial into a time-boxed elevation, and every `/authz` decision is proven on the audit chain.
 Any IdP speaking OpenID Connect (OIDC) and SCIM (System for Cross-domain Identity
@@ -111,15 +111,15 @@ Kubernetes wiring behind it are deployment mechanics covered in
 
 ## When to use PaloNexus
 
-- You are giving AI agents — or coding sandboxes — access to production systems, and you
-  refuse to hand them **standing production credentials**.
+- AI agents — or coding sandboxes — need access to production systems, and handing them
+  **standing production credentials** is not acceptable.
 - Every agent action must be traceable to an **accountable human owner** and a valid,
   verifiable delegation of authority.
 - Access should be **just-in-time**: one task, one resource scope, a short time window,
   automatic expiry.
-- Joiner / mover / leaver changes in your workforce IdP must **cascade immediately** into
+- Joiner / mover / leaver changes in the workforce IdP must **cascade immediately** into
   agent access and ownership state.
-- Your security and audit teams need **tamper-evident evidence** of who authorized what,
+- Security and audit teams need **tamper-evident evidence** of who authorized what,
   when, and under whose authority.
 
 What ships today, what is opt-in, and what is planned is tracked honestly, row by row, in

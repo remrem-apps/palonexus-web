@@ -5,7 +5,7 @@ sidebar:
   order: 5
 ---
 
-This page is how you operate the **egress-gateway enforcement mode** — one of
+This page covers operating the **egress-gateway enforcement mode** — one of
 PaloNexus's [three enforcement modes](/docs/concepts/index/#three-enforcement-modes)
 (governed tool · token exchange · egress gateway) — on Kubernetes. The hard part is
 **egress**: making every outbound action an agent takes — model call, tool call,

@@ -14,8 +14,8 @@ ships the exact files referenced below.
 
 Default to a **custom FastAPI/uvicorn container** wrapping a compiled `StateGraph`:
 lightweight, no LangSmith license, and easy to inject the egress middleware. (Use
-the LangGraph Agent Server only if you need managed threads/durable runs and hold
-a LangSmith Enterprise license; its health endpoint is `GET /ok` on port `8000`.)
+the LangGraph Agent Server only when managed threads/durable runs are needed and a
+LangSmith Enterprise license is held; its health endpoint is `GET /ok` on port `8000`.)
 
 Start from the skill's `templates/Dockerfile`:
 
@@ -126,7 +126,7 @@ spec:
 
 The same template includes the **Service** and the **ingress HTTPRoute**. The
 HTTPRoute tags the registry service name the control plane resolves — identical to
-the platform's `orders`/`echo` sample routes from the quickstart demo:
+the platform's `orders`/`echo` sample routes from the quickstart:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -182,7 +182,7 @@ NetworkPolicy enforces the **pod** port (post-DNAT), not the Service port. The
 pod port). The `egress-enforcement` component handles this for the platform agents.
 :::
 
-For the four platform agents — the shipped site-reliability-engineering (SRE) demo
+For the four platform agents — the shipped site-reliability-engineering (SRE) sample
 agents — prefer the **`egress-enforcement` +
 `egress-sidecar` + `agent-admission`** Kustomize components over hand-rolling
 these — they supply the proxy, flip each agent's egress policy to proxy-only,
@@ -243,7 +243,7 @@ real model id and attaches the key.
 
 | Logical name (registry) | Real model | Use |
 |---|---|---|
-| `model-openai` | `openai/gpt-4o-mini` | cheap default (demo) |
+| `model-openai` | `openai/gpt-4o-mini` | cheap default |
 | `model-openai-large` | `openai/gpt-4o` | stronger model |
 
 The agent's LLM client points at the broker (or, with the sidecar, at the localhost

@@ -5,7 +5,7 @@ sidebar:
   order: 7
 ---
 
-The vocabulary the rest of the docs assume. Terms are grouped, but you can read any entry on
+The vocabulary the rest of the docs assume. Terms are grouped, but each entry can be read on
 its own.
 
 ## Identity & credentials
@@ -173,7 +173,7 @@ re-validated server-side.
 sponsor, approver, operator, auditor, permissions, and a **negative persona**.
 
 **Negative persona.** The seeded user who must be **hard-denied** for a scenario — the red
-test case (e.g. **Claire Evans** for `devops-incident`).
+test case.
 
 ## Runtime & frameworks
 
@@ -231,7 +231,7 @@ previous record's `hash`. Editing or deleting any record breaks the chain;
 client id/secret) used by backend services rather than a logged-in human.
 
 **IdP — Identity Provider.** A service that issues and verifies identities. Here, **agent-idp**
-(for agents) and your **workforce IdP** (for humans; Logto in the demo).
+(for agents) and the **workforce IdP** (for humans; Logto).
 
 **IdP / Workforce IdP.** The enterprise identity provider that **owns human identity** — the
 system of record for employees, groups, org roles, and lifecycle status. PaloNexus is
@@ -261,10 +261,11 @@ propagated by directory sync: a **joiner** is provisioned, a **mover** changes
 groups/roles/org, and a **leaver** is deprovisioned (cascading revocation of any agent
 authority they held). See [IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model).
 
-**Logto.** The **reference/demo IdP** used in PaloNexus walkthroughs and seeded demo data — a
-convenient OIDC/SCIM workforce IdP. PaloNexus is IdP-neutral; any OIDC/SCIM IdP (Okta, Entra
-ID, Auth0, …) integrates the same way. The `seed-logto` tool seeds the Northstar **demo** org
-into it. See [IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model).
+**Logto.** The **supported workforce IdP** — the OIDC/SCIM identity provider PaloNexus
+integrates with for human identity. The core is IdP-neutral as an architecture fact, so other
+OIDC/SCIM IdPs (Okta, Entra ID, Auth0, …) integrate on the same surfaces. The `seed-logto`
+tool seeds the sample organization into it for evaluation and testing. See
+[IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model).
 
 **SCIM — System for Cross-domain Identity Management.** The standard (SCIM 2.0 User/Group)
 PaloNexus uses to sync the **workforce directory** from the enterprise IdP (Okta / Entra /
@@ -278,8 +279,8 @@ a delegation's evidence into a short-lived, audience-bound JWT (`sub`=agent, `ac
 revoked or expired delegation; logged metadata-only. See
 [Enterprise IAM API](/docs/reference/enterprise-iam-api/).
 
-**Northstar.** The fictional, seeded demo organization (`org_id` `7gdgqfu5j0oo`) all
-examples and personas belong to.
+**Northstar.** The seeded sample organization (`org_id` `7gdgqfu5j0oo`) that the
+fixtures — agent names, example emails, and scenario ids in code samples — belong to.
 
 **Envoy.** The data-plane proxy at the gateway that runs `ext_authz` against `/authz`.
 

@@ -7,7 +7,7 @@ sidebar:
 
 :::caution[Status: planned integration — design preview]
 This integration is **not built yet**. Nothing on this page is installable today; it
-describes intended behavior so you can evaluate the fit. There is no shipped MCP gateway.
+describes intended behavior so the fit can be evaluated. There is no shipped MCP gateway.
 The same governance contract ships today at the SDK layer for LangChain-family tools —
 see the [Deep Agents / LangChain adapters](/docs/integrations/deep-agents-sandboxes/).
 :::
@@ -25,8 +25,8 @@ whether it is still in force.
 
 ## Intended integration: a governed MCP gateway
 
-In the designed flow, a PaloNexus MCP gateway would sit between agents and your MCP
-servers:
+In the designed flow, a PaloNexus MCP gateway would sit between agents and the
+organization's MCP servers:
 
 1. Agents would connect to the gateway instead of directly to MCP servers — one governed
    choke point for the whole tool estate.
@@ -47,7 +47,7 @@ Revocation would be immediate and central: when a task closes, a delegation is r
 the owning human leaves, the gateway would stop honoring the agent's calls across all
 servers at once — no per-server credential rotation.
 
-## What you can use today
+## What is available today
 
 The MCP gateway is planned. The decision contract it would enforce is shipped and usable
 now in two forms: governed tools at the SDK layer

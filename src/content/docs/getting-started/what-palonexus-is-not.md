@@ -19,17 +19,17 @@ Here is the honest boundary, one category at a time.
 Agent frameworks — LangChain, LangGraph, Deep Agents, the OpenAI Agents SDK, CrewAI,
 AutoGen — own the agent loop: prompting, tool routing, memory, handoffs, and orchestration.
 PaloNexus does not build agents and ships no framework of its own. Instead it drops
-governance *into* the framework you already use: the shipped
+governance *into* the framework already in use: the shipped
 [LangChain](/docs/sdk/langchain/), [LangGraph](/docs/sdk/langgraph/), and
 [Deep Agents](/docs/sdk/deep-agents/) adapters gate tool, model, and agent-to-agent calls
-through the same `/authz` decision without restructuring your agent. See
+through the same `/authz` decision without restructuring the agent. See
 [Keep secrets outside Deep Agents sandboxes](/docs/integrations/deep-agents-sandboxes/).
 
 ## Not an agent runtime
 
 Runtimes and agent platforms — [kagent](https://kagent.dev/) is the clearest
 Kubernetes-native example — own building, deploying, connecting, running, and observing
-agents as workloads. PaloNexus does not run your agents. It governs the *authority* those
+agents as workloads. PaloNexus does not run agents. It governs the *authority* those
 agents exercise, whichever runtime hosts them: the runtime keeps orchestration, memory,
 models, and observability; PaloNexus supplies accountable ownership, delegation validation,
 and short-lived scoped access. A kagent integration is planned — see
@@ -54,8 +54,8 @@ Model gateways and LLM routers own provider routing, model fallback, caching, an
 cost optimization across model vendors. PaloNexus does not route or resell model traffic
 as a product. It treats a model call as **one more governed resource type**: the same
 deny-by-default `/authz` decision, allowlist, budget, and audit record that apply to a tool
-call or an agent-to-agent hop apply to a model call. If you already run a model gateway,
-keep it — PaloNexus sits on the authorization edge, not the inference path. See
+call or an agent-to-agent hop apply to a model call. An existing model gateway can stay
+in place — PaloNexus sits on the authorization edge, not the inference path. See
 [Credential-safe egress enforcement](/docs/concepts/egress-enforcement/).
 
 ## Not a Kubernetes operator
@@ -70,9 +70,9 @@ authorization decision is reachable from an SDK adapter with no cluster at all. 
 
 ## Not a workforce-IdP replacement
 
-Your workforce identity provider (IdP) — Okta, Entra ID, Google Workspace, Keycloak, Logto —
+The workforce identity provider (IdP) — Okta, Entra ID, Google Workspace, Keycloak, Logto —
 remains the source of truth for *humans*: who exists, what role they hold, whether they are
-still employed. PaloNexus never re-invents human identity. It connects to your IdP over
+still employed. PaloNexus never re-invents human identity. It connects to the IdP over
 OpenID Connect (OIDC) and SCIM (System for Cross-domain Identity Management), and extends
 it downward to agents: every agent is bound to an accountable
 human owner from that directory, and joiner/mover/leaver changes in the IdP cascade into

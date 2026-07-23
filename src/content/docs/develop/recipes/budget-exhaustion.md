@@ -14,9 +14,9 @@ the model-broker's usage reports), so it is not modeled by the offline `FakeCont
 
 ## Handle the deny (runs offline)
 
-The deny-handling shape is identical for *any* hard refusal, so you write and test it offline.
-Here **Claire Evans** — the seeded no-access persona of the Northstar demo scenario — is
-hard-denied on `INC-4821`, the sample incident from the
+The deny-handling shape is identical for *any* hard refusal, so it can be written and tested offline.
+Here the seeded no-access **negative persona** is
+hard-denied on a sample incident from the
 [temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/);
 in production `call budget
 exceeded` arrives through the very same `except PolicyDenied` branch:
@@ -50,7 +50,7 @@ hard deny: claire.evans@northstar.example is not authorized for scenario devops-
 :::note[Why budget can't be faked]
 Budgets depend on real wall-clock windows and the broker's token accounting. The offline fake
 deliberately models only **deny-by-default authority** (anonymous, negative persona, missing vs
-approved delegation). Test your *handling* offline; assert the *enforcement* on a live or compose
+approved delegation). Test the *handling* offline; assert the *enforcement* on a live or compose
 stack.
 :::
 

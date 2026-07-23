@@ -1,31 +1,29 @@
 ---
 title: CLI reference
-description: The command-line surfaces around PaloNexus — the seed-logto reference demo seeder (subcommands, global flags, env, sandbox safety), the platform make targets, the kubectl/kustomize apply path, and the SDK as the programmatic entry point.
+description: The command-line surfaces around PaloNexus — the seed-logto identity seeder (subcommands, global flags, env, sandbox safety), the platform make targets, the kubectl/kustomize apply path, and the SDK as the programmatic entry point.
 sidebar:
   order: 50
 ---
 
-PaloNexus is **identity-provider (IdP) neutral** and configured almost entirely by environment variables, so it
+PaloNexus is configured almost entirely by environment variables, so it
 has a deliberately small CLI surface. There is no single `palonexus` binary. Instead there are
 four distinct command-line surfaces:
 
-| Surface | What it is | When you reach for it |
+| Surface | What it is | When to use it |
 |---|---|---|
-| `seed-logto` | the **reference DEMO seeder** — loads the Northstar demo org into a Logto reference tenant | only to stand up the demo identity model |
+| `seed-logto` | the **identity seeder** — loads the sample organization into a Logto tenant | only to stand up the sample identity model |
 | `make` (platform `Makefile`) | build/test/render/deploy the control-plane | building images and rendering/applying manifests |
 | `kubectl` / kustomize | apply the control layer to a cluster | deploying to DigitalOcean Kubernetes (DOKS) or self-hosting |
-| Python SDK (`palonexus`) | the **programmatic** entry point — no standalone CLI binary | embedding governance in your own code/tests |
+| Python SDK (`palonexus`) | the **programmatic** entry point — no standalone CLI binary | embedding governance in application code and tests |
 
-## `seed-logto` — the reference demo seeder
+## `seed-logto` — the identity seeder
 
-:::note[Reference demo (Logto) — optional]
-`seed-logto` is the **demo seeder**, not part of the product runtime. PaloNexus itself is
-**IdP-neutral** and needs no Logto: the seeder only loads the **Northstar demo org**
-(workforce identity) into a **Logto reference tenant** so the allow/deny/needs-approval
-verdicts have realistic personas and scopes to decide against. A bring-your-own-IdP
-deployment skips it entirely and connects its own OpenID Connect (OIDC) / SCIM (System for
-Cross-domain Identity Management) workforce IdP (Okta, Microsoft
-Entra ID, Auth0, Ping, Google Workspace, Amazon Cognito, Keycloak, Logto, …) — see the
+:::note[Sample data only]
+`seed-logto` is the **identity seeder**, not part of the product runtime. It loads a
+**sample organization** (workforce identity) into a sandbox **Logto tenant** so the
+allow/deny/needs-approval verdicts have realistic identities and scopes to decide
+against. A production deployment skips it and connects the organization's own Logto
+tenant — see the
 [IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model).
 :::
 
@@ -74,7 +72,7 @@ python3 seed_logto.py --offline plan            # dry-run against the in-memory 
 | Flag | Default | Meaning |
 |---|---|---|
 | `--manifest` | `seed/northstar` | path to the seed manifest directory |
-| `--state` | `run_state.json` | run-state file (resource-id map). Defaults are isolated per seed namespace (`run_state.<namespace>.json`) and per offline run (`run_state.offline.json`) unless you pass an explicit path |
+| `--state` | `run_state.json` | run-state file (resource-id map). Defaults are isolated per seed namespace (`run_state.<namespace>.json`) and per offline run (`run_state.offline.json`) unless an explicit path is passed |
 | `--reports` | `reports` | output directory for `validate` reports |
 | `--env-file` | *(auto)* | dotenv file to load; if unset, falls back to `.env.local` then `.env` |
 | `--offline` | off | use the in-memory `FakeLogtoClient` — no network, no live tenant |
@@ -85,8 +83,8 @@ python3 seed_logto.py --offline plan            # dry-run against the in-memory 
 
 The seeder is configured entirely by `LOGTO_*` (an `.env.example` ships in
 `platform/seed-logto/`). The full table — with aliases, examples, and the secret machine-to-machine (M2M)
-credentials — is the **reference demo seeder env table** in
-[Environment variables](/docs/reference/env-vars/#reference-demo-seeder--logto-logto_).
+credentials — is the **identity-seeder env table** in
+[Environment variables](/docs/reference/env-vars/#identity-seeder--logto-logto_).
 The load-bearing ones:
 
 | Variable | Meaning |
@@ -180,7 +178,7 @@ here, follow the runbooks:
 ## The SDK — programmatic entry point
 
 The Python SDK (`palonexus` package) is the **programmatic** entry, not a CLI: there is **no
-standalone `palonexus` CLI binary**. You drive it from code or a REPL:
+standalone `palonexus` CLI binary**. Drive it from code or a REPL:
 
 ```python
 from palonexus import PaloNexus
@@ -195,8 +193,8 @@ See the [Quickstart](/docs/getting-started/quickstart/) to get started.
 
 ## See also
 
-- [Environment variables](/docs/reference/env-vars/) — the full env reference, including the reference demo seeder (`LOGTO_*`) table.
+- [Environment variables](/docs/reference/env-vars/) — the full env reference, including the identity seeder (`LOGTO_*`) table.
 - [agent-idp API (interactive)](/docs/reference/api/agent-idp/) — the try-it API reference generated from the OpenAPI 3.1 spec.
 - [DOKS runbook — Step 4](/docs/operations/doks-runbook/#step-4--seed-the-demo-identity-model) · [Self-hosting](/docs/operations/self-hosting/) — where these commands are used end to end.
-- [IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model) — why Logto is only the reference demo, and how any OIDC/SCIM IdP integrates.
+- [IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model) — how the Logto workforce IdP integrates.
 - [Quickstart](/docs/getting-started/quickstart/) — the programmatic entry point.

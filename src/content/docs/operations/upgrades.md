@@ -37,21 +37,21 @@ roll back *to* the prior tag in the same row.
 |---|---|---|---|---|
 | `control-plane` | `:h13` | `:h11` → `:h4` | agent-idp, portal | the decision engine; upgrade **after** agent-idp |
 | `agent-idp` | `:h13` | `:h11` → `:h8` | control-plane | the dependency — upgrade **first**; keeps the old endpoints |
-| `portal` | `:h13` | `:h11` → `:h10` | control-plane | operator console + backend-for-frontend (BFF); carries the optional demo-seed tooling (`SEED_LOGTO_DIR`/`SEED_LOGTO_PYTHON`) since `:h11` |
+| `portal` | `:h13` | `:h11` → `:h10` | control-plane | operator console + backend-for-frontend (BFF); carries the optional sample-seed tooling (`SEED_LOGTO_DIR`/`SEED_LOGTO_PYTHON`) since `:h11` |
 | `remediation` (agent runtime) | `:h12` | `:h6` | — (independent) | pure-Python agent; carries the async-gate fix in `palonexus_agent`. Other demo agents track the same package |
 | `model-broker` | `:dev` | — | — | unchanged across the recent waves (no code delta) |
 
 The published `ghcr.io/palonexus/*:dev` manifests are the canonical shape; the live
 cluster runs the equivalent `ghcr.io/rogerchucker/*:h<N>` variant. Pin whichever
-registry your cluster pulls from — the wire contract is identical.
+registry the cluster pulls from — the wire contract is identical.
 
-## Before you upgrade
+## Before upgrading
 
 1. **Back up** the audit chain + registry + agent-idp store, and verify the chain
    ([Backups](/docs/operations/backups/)). Take the backup *before* touching anything.
 2. **Read the [changelog / migration notes](/docs/reference/)** for the target version — schema
    or contract changes are called out there.
-3. **Render-check** the new images against your overlay:
+3. **Render-check** the new images against the overlay in use:
 
    ```bash
    kubectl kustomize --load-restrictor LoadRestrictionsNone deploy/kustomize/overlays/selfhost

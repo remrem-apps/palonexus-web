@@ -48,9 +48,9 @@ except PolicyDenied as e:
 
 ## The SDK typed error tree
 
-Deny-by-default is a **typed contract** in the SDK, not a return code you might
-forget to check. Every governed failure mode maps to exactly one exception under the
-`PaloNexusError` base, so you can `except` precisely the case you care about — a hard
+Deny-by-default is a **typed contract** in the SDK, not a return code that might
+go unchecked. Every governed failure mode maps to exactly one exception under the
+`PaloNexusError` base, so a caller can `except` precisely the case that matters — a hard
 no separately from a needs-a-human separately from the decision-point-is-down case.
 The whole tree, with its trigger, the wire signal behind it, and how to handle it:
 
@@ -80,7 +80,7 @@ The reasons fall into seven families, by which of the five concerns refused the 
 |---|---|---|---|
 | `invalid credential` | 401 | ingress | A bearer token was presented but failed OIDC (OpenID Connect) verification (bad signature, wrong `aud`, expired). Fix the token / `OIDC_*` config. An *absent* token is anonymous, not this. |
 | `invalid agent credential` | 401 | egress | The agent's own workload token failed verification. Re-check the agent's token issuer/audience. |
-| `verified agent credential required` | 403 | egress | `AGENT_IDENTITY_MODE=vc` and **no** `X-Palonexus-Agent-VP` was presented. Present a Membership [VP](/docs/getting-started/glossary/) (verifiable presentation — the SDK / egress-sidecar does this), or run `header` mode for a demo. |
+| `verified agent credential required` | 403 | egress | `AGENT_IDENTITY_MODE=vc` and **no** `X-Palonexus-Agent-VP` was presented. Present a Membership [VP](/docs/getting-started/glossary/) (verifiable presentation — the SDK / egress-sidecar does this), or run `header` mode for evaluation. |
 | `agent identity verification failed` | 403 | egress, proxy | The VP did not verify — bad holder signature, wrong audience/nonce, the Membership VC doesn't chain to the issuer, **or the VC is revoked** (StatusList). See [VC expiry & revocation](#vc-expiry-revocation-and-clock-skew). |
 | `actor/credential mismatch` | 403 | egress | The `X-Palonexus-Actor` header names a different agent than the verified VP proves. The header cannot override the credential — fix the actor header (or stop spoofing it). |
 | `agent identity required` | 407 | proxy | No `Proxy-Authorization: Bearer <VP>` on an egress-proxy request. **This is what blocks raw `curl`.** Route through the SDK / egress-sidecar so a VP is attached. |
@@ -94,7 +94,7 @@ The reasons fall into seven families, by which of the five concerns refused the 
 | `unknown agent` | 403 | egress | The calling agent name isn't registered. Run `pn.agents.register(...)` + `provision()`. |
 | `unknown target` | 403 | egress | The egress target service isn't registered. Register the model/tool/peer. |
 | `calling agent not registered` | 403 | proxy | Same as `unknown agent`, raised at the proxy after the VP verified but the name has no registry entry. |
-| `caller "<name>" is not a registered agent` | 403 | egress | The caller resolved to a registry entry whose `kind` is not `agent` (e.g. you pointed an agent name at a plain service). Register it as an agent. |
+| `caller "<name>" is not a registered agent` | 403 | egress | The caller resolved to a registry entry whose `kind` is not `agent` (e.g. an agent name pointed at a plain service). Register it as an agent. |
 
 ### 3. Policy (inline) — *may they* (scope / allowlist / budget)
 
@@ -123,7 +123,7 @@ back as **401 + `X-Palonexus-Needs-Approval: true`** and surface as `ApprovalReq
 |---|---|---|---|
 | `opa unavailable: <detail>` | 403 | ingress, egress | `OPA_URL` is set but OPA is unreachable / errored. **Fail-closed** — an unreachable policy engine must not widen access. Fix OPA health. |
 | `<opa reason>` | 403 | ingress, egress | The org Rego bundle returned a deny with this reason (e.g. geo/time/data-class). Policy is **deny-overrides**: an inline allow + OPA deny = deny. Adjust the Rego or the request. |
-| `opa decision` | 403 | ingress, egress | OPA denied but supplied no reason string. Add a `reason` to your Rego rule for legibility. |
+| `opa decision` | 403 | ingress, egress | OPA denied but supplied no reason string. Add a `reason` to the Rego rule for legibility. |
 
 ### 6. Egress-proxy hold / approval — *human egress approval*
 
@@ -157,14 +157,14 @@ strings parameterized at runtime.
 
 ### Identity mismatch
 
-If egress denies with `actor/credential mismatch`, your `X-Palonexus-Actor` header and the agent
+If egress denies with `actor/credential mismatch`, the `X-Palonexus-Actor` header and the agent
 proved by the VP disagree. The **credential wins** — never set the actor header to a name other
 than the provisioned agent. In `vc` mode, drop the header entirely and let the VP be
 authoritative.
 
 ### Egress / proxy wiring
 
-`agent identity required` (407) on traffic you expected to be governed usually means the request
+`agent identity required` (407) on traffic expected to be governed usually means the request
 **bypassed** the proxy:
 
 - Confirm `HTTPS_PROXY` / `HTTP_PROXY` point at `egress-proxy.palonexus.svc:80` and `NO_PROXY`

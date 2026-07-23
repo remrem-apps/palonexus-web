@@ -36,8 +36,8 @@ sequenceDiagram
 between two checks denies the second one regardless of remaining TTL. There is no
 stale-grant window.*
 
-The recipe uses the Northstar demo cast — the agent acts for Ethan Park, with Maya Chen
-approving, on `INC-4821`, the sample incident from the
+The recipe uses the seeded cast — the agent acts for the owner, with the approver
+approving, on a sample incident from the
 [temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/):
 
 ```python

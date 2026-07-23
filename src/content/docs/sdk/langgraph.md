@@ -21,7 +21,7 @@ removed:
 
 The sequence below traces the human-in-the-loop (HITL) needs-approval path end to end. The node asks `/authz` *before*
 running; on a needs-approval verdict it auto-starts the `request_delegation` flow and
-`interrupt()`s, which checkpoints the graph and returns control to your caller. A human approves
+`interrupt()`s, which checkpoints the graph and returns control to the caller. A human approves
 out of band; resuming with `Command(resume=…)` re-enters the node, which **re-checks** `/authz`
 and runs the wrapped body only now that the delegation is approved. The decision is made twice —
 deny-by-default holds until the grant exists.
@@ -106,9 +106,9 @@ task_id=…) as _:`.
 ## Full HITL flow, offline
 
 This is the shipped `examples/langgraph_runbook_hitl.py`, runnable with no network. It walks
-the complete deny → interrupt → approve → resume cycle with the personas of
-**devops-incident**, the demo scenario used throughout these docs — Ethan Park (the agent's
-owner) and Maya Chen (the approver) — working `INC-4821`, the docs' sample incident.
+the complete deny → interrupt → approve → resume cycle with the seeded personas of
+**devops-incident**, the sample scenario used throughout these docs — the agent's
+owner and the approver — working a sample incident.
 
 ```python
 from langgraph.checkpoint.memory import MemorySaver
@@ -157,7 +157,7 @@ with pn.task(subject=OWNER, task_id="INC-4821", scenario="devops-incident", acto
     payload = out["__interrupt__"][0].value["palonexus"]
     print(f"[interrupt] needs approval: {payload['action']} on {payload['resource']}")
 
-    # 2) Human approval (Maya), out-of-band. Offline we drive the in-memory control plane;
+    # 2) Human approval by the approver, out-of-band. Offline this drives the in-memory control plane;
     #    in production the approver clicks Approve in the portal.
     pending = pn._fake.open_delegations(OWNER)
     pn._fake.approve_delegation(pending[0].id, approver=APPROVER)
@@ -177,7 +177,7 @@ pn.close()
 ```
 
 The interrupt payload carries `{"action", "resource", "delegation_id", "subject", "task"}`
-under the `palonexus` key, so your UI (or the [Authority Delegation console](/docs/develop/delegations-and-approvals/))
+under the `palonexus` key, so a custom UI (or the [Authority Delegation console](/docs/develop/delegations-and-approvals/))
 has everything it needs to render the approval request.
 
 ## Explicit resume node

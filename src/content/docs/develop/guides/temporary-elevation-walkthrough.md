@@ -1,20 +1,20 @@
 ---
-title: Temporary elevation walkthrough (INC-4821)
-description: End-to-end guide — an agent acting on behalf of Ethan Park is denied a regulated runbook, requests a task-scoped delegation, Maya Chen approves, the read succeeds, and access is audited then revoked. Copy-pasteable, runs offline.
+title: Temporary elevation walkthrough
+description: End-to-end guide — an agent acting on behalf of its owner is denied a regulated runbook, requests a task-scoped delegation, an authorized approver approves, the read succeeds, and access is audited then revoked. Copy-pasteable, runs offline.
 sidebar:
   order: 8
 ---
 
 This is the canonical, copy-pasteable walkthrough of **temporary, task-scoped elevation** on a
-**regulated** asset — the `devops-incident` hero flow, end to end. An AI agent acts **on behalf
-of Ethan Park** (who can deploy services but deliberately lacks `runbooks:read`), is denied the
-regulated DB-failover runbook, opens a time-boxed delegation request, **Maya Chen** approves it,
-the privileged read succeeds for one task, and every hop is recorded on a tamper-evident audit
-chain — then access returns to zero.
+**regulated** asset — the end-to-end governed flow (register → deny → approve → succeed) of the
+`devops-incident` scenario. An AI agent acts **on behalf
+of its owner** (who can deploy services but deliberately lacks `runbooks:read`), is denied the
+regulated DB-failover runbook, opens a time-boxed delegation request, an **authorized approver**
+approves it, the privileged read succeeds for one task, and every hop is recorded on a
+tamper-evident audit chain — then access returns to zero.
 
 Every Python snippet on this page runs against `PaloNexus.offline()` — no cluster, no network —
-using the real Northstar seed personas (Northstar Corp is the fictional demo
-organization; no invented users). It is the doctest-trimmed companion
+using the seeded sample-organization fixtures (no invented users). It is the doctest-trimmed companion
 to the [Quickstart](/docs/getting-started/quickstart/), the [LangGraph adapter](/docs/sdk/langgraph/),
 and [Authority delegation](/docs/develop/delegations-and-approvals/).
 
@@ -24,29 +24,29 @@ and [Authority delegation](/docs/develop/delegations-and-approvals/).
 and the elevation is a named human decision, on the record.
 :::
 
-## Demo narrative
+## Scenario narrative
 
-Northstar Corp's site-reliability-engineering (SRE) team wants an incident-triage agent that pulls logs, compares deployments,
+The sample organization's site-reliability-engineering (SRE) team wants an incident-triage agent that pulls logs, compares deployments,
 and — when an incident is bad enough — reads the **regulated DB-failover runbook** to propose a
 remediation. That runbook (`runbooks-api:/runbooks/db-failover`, `dataClass: regulated`) is
 exactly the asset that must **not** be standing access for a bot.
 
 The arc, in brief:
 
-1. **Build** — a developer registers `northstar-devops-incident-agent` with mandatory
-   `owner=ethan.park`, `sponsor=maya.chen`.
-2. **Run** — the agent triages **INC-4821**: `logs:read`, `deployments:compare` succeed, because
-   Ethan genuinely holds those scopes. The agent only ever borrows Ethan's real authority.
+1. **Build** — a developer registers `northstar-devops-incident-agent` with a mandatory
+   owner and sponsor.
+2. **Run** — the agent triages a sample incident (`INC-4821` in the code below): `logs:read`, `deployments:compare` succeed, because
+   the owner genuinely holds those scopes. The agent only ever borrows the owner's real authority.
 3. **Denied** — the agent reaches for the runbook (`runbooks:read`). `/authz` returns
-   **deny / needs-approval** — Ethan doesn't hold `runbooks:read`, so neither can his agent.
-4. **Elevate** — the agent opens a **task-scoped delegation request**, bounded to INC-4821.
-5. **Approve** — **Maya Chen** approves in the portal. She qualifies on both gates: she holds
-   `org:agents:approve` **and** covers the DevOps domain (separation of duties — the owner does
-   not self-approve).
+   **deny / needs-approval** — the owner doesn't hold `runbooks:read`, so neither can the agent.
+4. **Elevate** — the agent opens a **task-scoped delegation request**, bounded to the incident task.
+5. **Approve** — an authorized approver approves in the portal, qualifying on both gates:
+   holding `org:agents:approve` **and** covering the DevOps domain (separation of duties — the
+   owner does not self-approve).
 6. **Succeed** — with the time-boxed delegation, the agent re-calls `runbooks:read`; `/authz`
    now allows it and the agent reads the failover procedure.
 7. **Audit** — the tamper-evident chain shows request → deny → delegation → approval → the single
-   privileged read; every hop carries `subject=ethan.park`.
+   privileged read; every hop carries the on-behalf-of subject.
 8. **Revoke** — the delegation expires (or is revoked); the next `runbooks:read` denies again.
 
 ## Personas and the regulated asset
@@ -55,23 +55,23 @@ Stable enterprise subject is the **`employeeId`** (`NST-####`), deterministic ac
 never the email. All hold org membership in `northstar-corp`. See the
 [glossary](/docs/getting-started/glossary/) for the identity and access management (IAM) acronyms.
 
-| Persona | Subject | Email | Flow role |
+| Role | Subject | Seeded email | Authority |
 |---|---|---|---|
-| **Ethan Park** | `NST-1011` | ethan.park@northstar.example | **Owner** / on-behalf-of subject (holds `deployments:*`, **not** `runbooks:read`) |
-| **Maya Chen** | `NST-1002` | maya.chen@northstar.example | **Sponsor + Approver** (`org:agents:approve`, covers DevOps) |
-| **Arjun Mehta** | `NST-1012` | arjun.mehta@northstar.example | **Operator** |
-| **Omar Haddad** | `NST-1003` | omar.haddad@northstar.example | **Auditor** (approve covers Security only) |
-| **Claire Evans** | `NST-1018` | claire.evans@northstar.example | **Negative** persona (no scopes; must be hard-denied) |
-| **Julian Smith** | `NST-1026` | julian.smith@northstar.example | **Developer** (builds + registers the agent) |
+| **Owner** | `NST-1011` | ethan.park@northstar.example | On-behalf-of subject (holds `deployments:*`, **not** `runbooks:read`) |
+| **Sponsor + Approver** | `NST-1002` | maya.chen@northstar.example | `org:agents:approve`, covers DevOps |
+| **Operator** | `NST-1012` | arjun.mehta@northstar.example | Runs the scenario day to day |
+| **Auditor** | `NST-1003` | omar.haddad@northstar.example | Approve authority covers Security only |
+| **Negative persona** | `NST-1018` | claire.evans@northstar.example | No scopes; must be hard-denied |
+| **Developer** | `NST-1026` | julian.smith@northstar.example | Builds + registers the agent |
 
 **The two-gate approval rule** (`authority.py::decide`): an approver must hold
 `org:agents:approve`/`delegations:approve` **and** `covers_scenario` (hold ≥1 of the DevOps
 scenario's resource scopes). Consequences worth showing live:
 
-- **Maya approves** ✅ — holds `org:agents:approve` *and* `runbooks:read` via the DevOps service-owner role.
-- **Omar denied as approver** ❌ — holds `org:agents:approve` but only covers **Security** →
-  `outside_scenario_domain:devops-incident`. He can only **audit**.
-- **Claire denied everything** ❌ — no scopes; invariant-enforced to never hold `org:agents:*`.
+- **The approver approves** ✅ — holds `org:agents:approve` *and* `runbooks:read` via the DevOps service-owner role.
+- **The auditor is denied as approver** ❌ — holds `org:agents:approve` but only covers **Security** →
+  `outside_scenario_domain:devops-incident`. The auditor can only **audit**.
+- **The negative persona is denied everything** ❌ — no scopes; invariant-enforced to never hold `org:agents:*`.
 
 The regulated asset under test:
 
@@ -100,13 +100,13 @@ export PALONEXUS_CONTROL_PLANE_URL=http://localhost:9191   # /authz decision poi
 export PALONEXUS_MGMT_URL=http://localhost:8181            # registry + /v1/audit
 export PALONEXUS_IDP_URL=http://localhost:8090             # agent-idp
 export PALONEXUS_API_KEY=pn_live_…                         # sent as bearer
-export PALONEXUS_TENANT_ID=7gdgqfu5j0oo                    # Northstar org id
+export PALONEXUS_TENANT_ID=7gdgqfu5j0oo                    # seeded sample-org tenant id
 export PALONEXUS_OFFLINE=1                                 # in-memory FakeControlPlane, no cluster
 ```
 
 The shape of the flow is always the same four moves inside a bound **task**:
 `check` (deny) → `request_delegation` (pending) → *human approve* → `authorize` (allow). The
-typed error tree lets you catch exactly the case you care about:
+typed error tree makes it possible to catch exactly the case that matters:
 
 <!-- no-doctest: illustrative fragment — uses `task` from a neighbouring block (not standalone-runnable) -->
 ```python
@@ -160,7 +160,7 @@ with PaloNexus.offline() as pn:
     print("1) provisioned:", identity.did)
 
     with pn.task(subject=OWNER, task_id=TASK, scenario="devops-incident", actor=AGENT) as task:
-        # 2) Deny-by-default: Ethan does not hold runbooks:read, so neither does his agent.
+        # 2) Deny-by-default: the owner does not hold runbooks:read, so neither does the agent.
         assert task.check(action=ACTION, resource=RESOURCE).needs_approval
         try:
             task.authorize(action=ACTION, resource=RESOURCE)
@@ -172,20 +172,21 @@ with PaloNexus.offline() as pn:
                                         reason=f"{TASK} db failover", ttl=300)
         print("3) request_delegation:", deleg.id, deleg.status)
 
-        # 4) Maya approves. Offline we drive the in-memory control plane; in production she
-        #    clicks Approve in the /approvals console (separation of duties — not the owner).
+        # 4) The approver approves. Offline this drives the in-memory control plane; in
+        #    production the approver clicks Approve in the /approvals console
+        #    (separation of duties — not the owner).
         approved = pn._fake.approve_delegation(deleg.id, approver=SPONSOR)
 
         # 5) Retry: the approved, time-boxed delegation lets the privileged read through.
         assert task.authorize(action=ACTION, resource=RESOURCE).allow
         print("5) authorize allowed after approval")
 
-    # 6) Negative persona: Claire is hard-denied for this scenario (no authority).
+    # 6) Negative persona: hard-denied for this scenario (no authority).
     with pn.task(subject=NEGATIVE, task_id=TASK, scenario="devops-incident", actor=AGENT) as bad:
         assert not bad.check(action=ACTION, resource=RESOURCE).allow
         print("6) negative persona (Claire) hard-denied")
 
-    # 7) Tamper-evident audit chain for the task (every row carries subject=ethan.park).
+    # 7) Tamper-evident audit chain for the task (every row carries the on-behalf-of subject).
     for ev in pn.audit.tail(task_id=TASK):
         print("7) audit:", ev.seq, ev.decision, ev.actor, ev.action)
     assert pn.audit.verify_chain()
@@ -276,7 +277,7 @@ with pn.task(subject=OWNER, task_id="INC-4821", scenario="devops-incident", acto
     payload = out["__interrupt__"][0].value["palonexus"]
     print(f"[interrupt] needs approval: {payload['action']} on {payload['resource']}")
 
-    # 2) Human approval (Maya), out-of-band. Offline we drive the in-memory control plane;
+    # 2) Human approval, out-of-band. Offline this drives the in-memory control plane;
     #    in production the approver clicks Approve in the portal.
     pending = pn._fake.open_delegations(OWNER)
     pn._fake.approve_delegation(pending[0].id, approver=APPROVER)
@@ -307,7 +308,7 @@ Each step → SDK call → underlying API → the real policy decision and audit
 |---|---|---|---|---|
 | 1 | **Initial check — denied** | `task.check(action, resource)` | `POST /authz` (`X-Palonexus-On-Behalf-Of`, `-Actor`, `-Action`, `-Resource`) | **401** · `X-Palonexus-Needs-Approval: true` · `X-Palonexus-Deny-Reason: no approved delegation` → `PolicyDecision(allow=False, needs_approval=True)` |
 | 2 | **Request delegation** | `task.request_delegation(..., ttl=300)` | `POST /v1/delegations/request` | **201** · `Delegation(status="pending")`; `notAfter = now + ttl` |
-| 3 | **Maya approves → Verifiable Credential (VC) minted** | portal / `pn._fake.approve_delegation(id, approver=)` | `POST /v1/delegations/{id}/approve {"approver":"maya.chen@…"}` (authority `org:agents:approve`) | **200** · `status=approved`, `vcJti`, `notAfter` |
+| 3 | **Approver approves → Verifiable Credential (VC) minted** | portal / `pn._fake.approve_delegation(id, approver=)` | `POST /v1/delegations/{id}/approve {"approver":"maya.chen@…"}` (authority `org:agents:approve`) | **200** · `status=approved`, `vcJti`, `notAfter` |
 | 4 | **Retry authorize → allow** | `task.authorize(action, resource)` | `POST /authz` (identical headers) | **200** · `X-Palonexus-Subject: ethan.park@…` → `PolicyDecision(allow=True)`; audit `allow=true rule=inline` |
 | 5 | **TTL expiry** | next `task.check(...)` after `notAfter` | `GET /v1/delegations/check` | live `{"ok":false,"reason":"delegation expired"}` → `PolicyDecision(expired=True)` → `authorize` raises `DelegationExpired`. Offline: fast-forward with `pn._fake.advance(seconds)` to prove the same revert deterministically |
 | 6 | **Revoke** | `pn.revoke(delegation, reason=)` | `POST /v1/revoke {"vcJti": …}` | **200** · stays denied across restore |
@@ -320,7 +321,7 @@ lifecycle: `GET /v1/audit/verify → {"ok":true,"brokenAtSeq":0}`.
 ### Proving expiry and approver authority offline
 
 The two time-and-authority guarantees — *only the right human may approve* (AC-6) and *access is
-temporary* (AC-7) — are enforced by `PaloNexus.offline()`, so you can prove them with no cluster.
+temporary* (AC-7) — are enforced by `PaloNexus.offline()`, so they can be proven with no cluster.
 `pn._fake.advance(seconds)` fast-forwards the delegation clock; `may_approve` runs the two-gate rule:
 
 ```python
@@ -342,7 +343,7 @@ with PaloNexus.offline() as pn:
         except GovernanceError as e:
             print("approver rejected:", e)          # outside_scenario_domain:devops-incident
 
-        pn._fake.approve_delegation(deleg.id, approver=APPROVER)     # Maya qualifies on both gates
+        pn._fake.approve_delegation(deleg.id, approver=APPROVER)     # the approver qualifies on both gates
         assert task.authorize(action=ACTION, resource=RESOURCE).allow
 
         # AC-7: fast-forward past notAfter — access is temporary, so it reverts to deny.
@@ -362,10 +363,10 @@ access expired — re-approval required
 
 ### The approver — `/approvals`
 
-Maya works the **Authority Delegation** console (`/approvals`). Set the **Approver** input (top-right,
-persisted to `localStorage`) to `maya.chen@northstar.example` — that string is sent as `approver`
+The approver works the **Authority Delegation** console (`/approvals`). Set the **Approver** input (top-right,
+persisted to `localStorage`) to the approver's seeded email (`maya.chen@northstar.example`) — that string is sent as `approver`
 and lands in the delegation + audit record. Pending cards show the agent (`actorName`), a
-**DataClassBadge** flagging the regulated tool, the action, resource, task `INC-4821`, reason, and
+**DataClassBadge** flagging the regulated tool, the action, resource, task id, reason, and
 requested time. **Approve** → `POST /v1/delegations/{id}/approve` mints the Delegation VC
 (`status: approved`, `vcJti`, `notAfter`). Active-credential cards show approved-by, VC jti, a
 live **Expires** countdown, and a **Revoke** button. The mechanics live in
@@ -373,8 +374,8 @@ live **Expires** countdown, and a **Revoke** button. The mechanics live in
 
 ### The auditor — `/audit`
 
-Omar reviews the **hash-chained, tamper-evident** decision log (`/audit`): filter by task id
-(`INC-4821`), agent, or scenario; **Verify chain** reports *"Chain intact (N records)"* or
+The auditor reviews the **hash-chained, tamper-evident** decision log (`/audit`): filter by task id,
+agent, or scenario; **Verify chain** reports *"Chain intact (N records)"* or
 *"BROKEN at seq N"*; each row deep-links to its Tempo trace and exports to CSV/JSON. The
 compliance framing is immutable: *who* (`subject=ethan.park`, on-behalf-of), *what*
 (`action`/`resource`), *when*, *decision* (`allow`), *why* (`rule`+`reason`), *who approved*
@@ -411,12 +412,12 @@ The **two-code convention** (`authz.go serveEgress` + [Troubleshooting](/docs/de
 |---|---|---|---|
 | 1 | Check before delegation | offline `needs_approval=True`; egress **401** needs-approval | ✅ |
 | 2 | Authorize without approval | **401** → `ApprovalRequired` (`authorize` raises; `check` returns) | ✅ |
-| 3 | Negative persona (Claire) | offline hard deny **403** `…not authorized for scenario devops-incident` | ⚠️ offline-enforced; live control-plane scenario-authority hard-deny still via authority-preview (gap) |
+| 3 | Negative persona | offline hard deny **403** `…not authorized for scenario devops-incident` | ⚠️ offline-enforced; live control-plane scenario-authority hard-deny still via authority-preview (gap) |
 | 4 | Delegation expired (TTL) | `check` `expired=True` → `authorize` raises `DelegationExpired` | ✅ offline (`pn._fake.advance`) + live |
 | 5 | Delegation revoked mid-task | live StatusList re-check denies next call **403** → `CredentialRevoked` | ✅ |
 | 6 | Register without owner/sponsor | `GovernanceError` before any network call | ✅ |
 | 7 | Unreachable `/authz` | fail-closed → `ControlPlaneUnavailable` (never silent allow) | ✅ |
-| 8 | Approver lacks authority / wrong domain | `approve_delegation` raises `GovernanceError` (`lacks org:agents:approve` / `outside_scenario_domain:…`); only Maya may approve devops | ✅ offline (`may_approve` two-gate) + live |
+| 8 | Approver lacks authority / wrong domain | `approve_delegation` raises `GovernanceError` (`lacks org:agents:approve` / `outside_scenario_domain:…`); only the qualified approver may approve devops | ✅ offline (`may_approve` two-gate) + live |
 | 9 | Wrong resource/scope mismatch | deny — must match the exact `(action, resource)` tuple | ✅ |
 | 10 | Cascade / SCIM (System for Cross-domain Identity Management) leaver | all on-behalf-of (or tenant) delegations revoked; next call denies | ✅ |
 
@@ -435,7 +436,7 @@ build follow-up in Linear under PaloNexus.
 
 ## Acceptance and cleanup
 
-The demo-storyline acceptance slice (legend: ✅ implemented + tested · 🟡 partial / live-only):
+The acceptance slice for this flow (legend: ✅ implemented + tested · 🟡 partial / live-only):
 
 | # | Criterion | Status |
 |---|---|---|
@@ -444,7 +445,7 @@ The demo-storyline acceptance slice (legend: ✅ implemented + tested · 🟡 pa
 | AC-3 | Task-scoped delegation (exact `(action, resource)` tuple) | ✅ |
 | AC-4 | Denied access surfaced clearly (no silent 500) | ✅ |
 | AC-5 | Elevation request (`ttl`) creates a pending grant | ✅ |
-| AC-6 | Approval by an authorized employee (Maya); others can't | ✅ two-gate `may_approve` enforced offline + live |
+| AC-6 | Approval by an authorized employee; others can't | ✅ two-gate `may_approve` enforced offline + live |
 | AC-7 | Temporary (TTL) access; expiry denies | ✅ `notAfter` honored live; offline clock-expiry via `pn._fake.advance` |
 | AC-8 | Enforcement at egress (same `/authz`; proxy floor) | ✅ |
 | AC-9 | Audit hash-chained + verifiable; tamper detected | ✅ |

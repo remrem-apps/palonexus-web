@@ -5,10 +5,10 @@ sidebar:
   order: 2
 ---
 
-Reach for this page when you're calling the platform directly — wiring a gateway, scripting
-the registry, approving an egress hold, or onboarding an agent — and you need the exact
-method, path, body, and status code. It's the complete HTTP contract for every plane, so you
-can integrate without reading the source.
+This page is the complete HTTP contract for every plane — the exact method, path, body,
+and status code for calling the platform directly: wiring a gateway, scripting
+the registry, approving an egress hold, or onboarding an agent — enough to
+integrate without reading the source.
 
 The contracts are grouped by plane. All bodies are JSON unless noted. Short forms used
 throughout: `ext_authz` is Envoy's external-authorization hook; a verifiable presentation

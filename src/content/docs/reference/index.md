@@ -40,7 +40,7 @@ everywhere; only the Kustomize overlay changes. `AGENT_IDENTITY_MODE`,
 
 ## See also
 
-- [CLI reference](/docs/reference/cli/) — the `seed-logto` reference demo seeder, the platform `make` targets, the `kubectl`/kustomize apply path, and the SDK as the programmatic entry point.
+- [CLI reference](/docs/reference/cli/) — the `seed-logto` identity seeder, the platform `make` targets, the `kubectl`/kustomize apply path, and the SDK as the programmatic entry point.
 - [agent-idp API (interactive)](/docs/reference/api/agent-idp/) — try-it reference generated from the OpenAPI 3.1 spec.
 - [Releases & Changelog](/docs/reference/changelog/) — versioning policy, the current compatible component set, and release notes.
 - [Enterprise IAM API](/docs/reference/enterprise-iam-api/) — enterprise identity and access management (IAM): directory sync, employee identity, ownership governance, revocation cascade, human-authority delegation, and the STS token exchange.

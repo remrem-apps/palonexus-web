@@ -1,20 +1,21 @@
 ---
 title: Recipes
-description: A cookbook of runnable, offline PaloNexus governance patterns — A2A delegation, the revocation race, budget exhaustion, a multi-scenario agent, and offline tests — all using the real Northstar seed personas.
+description: A cookbook of runnable, offline PaloNexus governance patterns — A2A delegation, the revocation race, budget exhaustion, a multi-scenario agent, and offline tests — all using the seeded sample-organization fixtures.
 sidebar:
   order: 1
 ---
 
 Task-focused, **runnable** patterns built on the shipped `examples/` and the
-**devops-incident** scenario — the demo scenario from the
+**devops-incident** scenario — the scenario from the
 [temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/).
 Every snippet here runs against `PaloNexus.offline()` (no cluster,
-no network, no API key) using the real seed personas of Northstar Corp, the
-fictional demo organization — **no invented users**:
+no network, no API key) using the seeded fixtures of the sample
+organization — **no invented users**:
 
-> **devops-incident** — owner **Ethan Park**, sponsor + approver **Maya Chen**, operator
-> **Arjun Mehta**, auditor **Omar Haddad**; the seeded **negative persona** (must be hard-denied)
-> is **Claire Evans**.
+> **devops-incident** — a seeded owner, a sponsor who is also the approver, an operator, an
+> auditor, and a seeded **negative persona** (must be hard-denied). The
+> [walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/#personas-and-the-regulated-asset)
+> maps each role to its seeded subject and email.
 
 Each recipe was executed against the shipped `palonexus` package while writing these docs.
 

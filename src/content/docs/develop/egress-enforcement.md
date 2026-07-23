@@ -7,7 +7,7 @@ sidebar:
 
 This is the developer's view of the **egress-gateway enforcement mode** — one of the
 [three enforcement modes](/docs/concepts/index/#three-enforcement-modes) (governed
-tool · token exchange · egress gateway). Your agent code never holds standing
+tool · token exchange · egress gateway). Agent code never holds standing
 credentials for the systems it acts on; every outbound call is authorized at `/authz`
 and credentials are injected after the untrusted boundary — the credential-injecting
 outbound-proxy pattern LangChain's sandbox docs recommend.
@@ -106,7 +106,7 @@ directly: see [Deploy an agent](/docs/develop/deploy-an-agent/#3-the-proxy-only-
 
 ## The layering: coarse at the proxy, fine at the server
 
-This distinction governs the `dataClass` you register a target with:
+This distinction governs the `dataClass` a target is registered with:
 
 - **The egress proxy is the COARSE gate** — identity (VP) + allowlist (`Allow*`) +
   budget. It only sees raw HTTP, so it **cannot** match a fine-grained

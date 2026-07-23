@@ -24,14 +24,14 @@ that north-south capability is the foundation egress is built on, not the headli
 and metrics converge there (`internal/authz/authz.go`); everything else is a dependency of that
 one decision. PaloNexus is built **deny-by-default** and **audit-by-construction**: recording
 the decision *is* the audit step in the same code path that makes it. And PaloNexus sits
-**beside** your workforce identity provider (IdP), not in front of it: it never holds your employees' credentials,
+**beside** the workforce identity provider (IdP), not in front of it: it never holds employee credentials,
 and it acts on agent egress only when a human has delegated authority for a specific,
 time-boxed task.
 
 ## Trust boundaries
 
 Four trust zones meet at the control plane, and PaloNexus is explicit about **what crosses each
-boundary**. Your workforce IdP owns human identity and keeps the credentials. The PaloNexus control
+boundary**. The workforce IdP owns human identity and keeps the credentials. The PaloNexus control
 plane makes the `/authz` decision and writes the tamper-evident audit. The agent-idp service is the
 `did:web` issuer and the authority for delegations and revocations. The agents themselves are
 confined by NetworkPolicy so their only route out is the egress proxy — there is no un-governed path
@@ -186,8 +186,7 @@ service is named by `X-Palonexus-Service` (set by the HTTPRoute), falling back t
 For regulated work an agent never acts **as itself**: it acts
 **[on-behalf-of](/docs/getting-started/glossary/)** a human subject, and the audit
 records both actor and subject. Authorization is **[task-based](/docs/getting-started/glossary/)**
-(TBAC): a delegation is granted for one task (e.g. `INC-4821`, the sample incident used in these
-docs' demo scenario), time-boxed, and the agent does
+(TBAC): a delegation is granted for one task (e.g. a single incident), time-boxed, and the agent does
 not retain the privilege afterward.
 
 ## Cryptographic, revocable agent identity
@@ -212,8 +211,8 @@ revoking a credential denies the **next** decision in under a second — even mi
 
 ## How the SDK reflects the model
 
-The SDK makes the posture a **typed contract**, so deny-by-default is something you handle, not
-something you might forget to check:
+The SDK makes the posture a **typed contract** — deny-by-default surfaces as exceptions to
+handle, not status codes that are easy to forget to check:
 
 | Platform behavior | SDK surface |
 |---|---|
@@ -230,17 +229,17 @@ so tests prove the contract with no cluster.
 ## Data handling
 
 PaloNexus stores the minimum needed to make and prove decisions. It **does not** store workforce
-passwords or credentials — those stay with your IdP. Secrets are **never baked into images**
+passwords or credentials — those stay with the IdP. Secrets are **never baked into images**
 (see [Secrets](/docs/operations/secrets/)); they arrive at runtime from a secret manager.
 
 | Data | Where | Sensitivity | Retention |
 |---|---|---|---|
 | **Registry** (services, agents, models, tools, allowlists, budgets, ownership) | control-plane store (`REGISTRY_DB_URL`) | Config / metadata — no end-user credentials | Operational; re-creatable from declarative source |
 | **agent-idp store** (provisioned agents, delegations, revocations / StatusList) | agent-idp store (`IDP_DB_URL`) | Identity metadata; losing revocation state could resurrect a revoked credential | Operational; back up so revocation survives |
-| **Audit hash-chain** | control-plane audit store → Loki / durable object storage | Decision system-of-record (metadata: actor, subject, target, outcome, reason, hash) — **not** payloads | Set to your regulatory window; the long-term artifact |
+| **Audit hash-chain** | control-plane audit store → Loki / durable object storage | Decision system-of-record (metadata: actor, subject, target, outcome, reason, hash) — **not** payloads | Set to the applicable regulatory window; the long-term artifact |
 | **LangGraph checkpointer** | `PALONEXUS_AGENT_DB_URL` | In-flight human-in-the-loop (HITL) thread state (paused approvals) | Operational; needed to resume paused runs |
 | **Issuer key** | `agent-idp` Secret, from a secret manager | High — signs every VC and Security Token Service (STS) token | Must be stable; never rotated as part of a code upgrade |
-| **Workforce passwords / credentials** | **Not stored — held by your IdP** | n/a | n/a |
+| **Workforce passwords / credentials** | **Not stored — held by the IdP** | n/a | n/a |
 
 The audit trail records decision **metadata** (who, on behalf of whom, against what target, the
 outcome and reason, and the chain hash) — it is not a content/payload store. See
@@ -267,14 +266,14 @@ checklist, and keep components within the supported set in the
 
 ## Responsible disclosure
 
-If you believe you've found a security vulnerability in PaloNexus, please report it privately:
+Report a suspected security vulnerability in PaloNexus privately:
 
 - **Email:** `security@palonexus.example` *(placeholder — confirm the real security contact before
   publishing this page externally)*.
 - **Please do not** open a public GitHub issue, discussion, or PR for a suspected vulnerability, and
   avoid posting proof-of-concept details publicly until a fix is available.
 - Include the affected component and version (e.g. `control-plane :h13`), reproduction steps, and
-  impact. We aim to acknowledge reports and coordinate a fix and disclosure timeline with you.
+  impact. We aim to acknowledge reports and coordinate a fix and disclosure timeline with the reporter.
 
 The full policy — supported components, scope (what's in/out), expected handling, and a safe-harbor
 statement — lives in the repository's **`SECURITY.md`** at the repo root, and a machine-readable

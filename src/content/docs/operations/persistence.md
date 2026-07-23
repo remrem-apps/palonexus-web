@@ -10,8 +10,8 @@ delegations, revocations / StatusList) are in-process maps — a pod restart wip
 every registration, delegation, and revocation. The in-memory default is also
 per-replica, so any multi-replica/HA deployment needs a shared backend. The
 opt-in persistence layer makes them durable behind the *same* storage interface,
-selected entirely by environment variables. This durability is what lets you
-prove which agent acted on whose still-valid authority *across restarts* — the
+selected entirely by environment variables. This durability is what makes it
+provable which agent acted on whose still-valid authority *across restarts* — the
 identity and credential design it backs lives in
 [Agent identity & credentials](/docs/concepts/identity-and-credentials/).
 
@@ -78,15 +78,15 @@ components:
 # https://cloudnative-pg.io
 ```
 
-> The component does not add a NetworkPolicy for Postgres today. If you later
-> lock down control-plane / agent-idp egress, allow **TCP 5432** to pods labelled
+> The component does not add a NetworkPolicy for Postgres today. When later
+> locking down control-plane / agent-idp egress, allow **TCP 5432** to pods labelled
 > `cnpg.io/cluster=<palonexus-pg|agentidp-pg>`.
 
 ## Fail-closed
 
 If a durable backend is **misconfigured or unreachable at startup**, the process
 **exits** rather than silently falling back to memory — a typo in a DSN must not
-quietly drop you to a store that loses every registration. This mirrors the
+quietly drop the deployment to a store that loses every registration. This mirrors the
 control plane's deny-by-default posture: see the
 [control-plane invariants](/docs/operations/control-plane/#fail-closed-invariants-do-not-break-these).
 

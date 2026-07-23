@@ -1,58 +1,54 @@
 ---
 title: Quickstart
-description: One quickstart, two paths — govern your first authority-bound agent with the palonexus Python SDK (10 minutes, fully offline), or bring the whole PaloNexus platform up on a local kind cluster.
+description: One quickstart, two paths — govern a first authority-bound agent with the palonexus Python SDK (10 minutes, fully offline), or bring the PaloNexus platform up on a local kind cluster.
 sidebar:
   order: 1.5
 ---
 
 import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-One quickstart, two paths. Pick the tab that matches what you're here to do:
+One quickstart, two paths. Pick the tab that matches the goal:
 
-- **Govern an agent (Python SDK)** — the ten-minute first success: `pip install`, then
-  register → **denied by default** → human-approved → **succeed**, with no cluster, no
-  network, no API key.
-- **Run the platform locally** — bring the full control layer up on a local
+- **Govern an agent (Python SDK)** — register an agent, see a governed call denied by
+  default, approve it as a human, and verify the audit chain. About ten minutes, fully
+  offline: no cluster, no network, no API key.
+- **Run the platform locally** — bring the control layer up on a local
   [kind](https://kind.sigs.k8s.io) cluster, plus how to run this docs site itself.
 
 <Tabs>
 
 <TabItem label="Govern an agent (Python SDK)">
 
-This is the **ten-minute first success**: from `pip install` to a governed call that is
-**denied by default**, then **approved**, then **succeeds** — with **no cluster, no network,
-no API key**. Everything runs against `PaloNexus.offline()`, an in-memory control plane
-seeded with the personas of the real **devops-incident** demo scenario.
+The walkthrough runs from `pip install` to a governed call that is denied by default, then
+approved, then succeeds — in about ten minutes. Everything runs against
+`PaloNexus.offline()`, an in-memory control plane seeded with the sample identities of the
+`devops-incident` scenario — no cluster, no network, no API key.
 
-The story you'll run is the `devops-incident` scenario at Northstar — the fictional demo
-organization — from the
-[demo seed (the reference Logto org)](/docs/develop/enterprise-iam/): a site-reliability (SRE) agent (`northstar-devops-incident-agent`)
-owned by **Ethan Park**, sponsored and approved by **Maya Chen**, wants to read a regulated
-runbook during incident `INC-4821` — the sample incident used across these docs.
-Deny-by-default means it can't — until Maya approves a
-task-scoped delegation.
+In that scenario (from the [seed data](/docs/develop/enterprise-iam/)), a site-reliability
+(SRE) agent with a registered owner and sponsor requests read access to a regulated runbook
+during a sample incident (`INC-4821`). Deny-by-default blocks the call until the sponsor
+approves a task-scoped delegation.
 
-<Aside type="note" title="No invented users">
-Every name here is a seeded persona: **Ethan Park** (owner), **Maya Chen** (sponsor +
-approver), **Arjun Mehta** (operator), **Omar Haddad** (auditor), and **Claire Evans** (the
-negative persona who must be denied). They are demo fixtures, seeded straight from the
-demo seeder in `platform/seed-logto` (the reference Logto org).
+<Aside type="note" title="Seeded identities">
+The offline control plane seeds a sample identity for each governance role — owner,
+sponsor/approver, operator, auditor, and a negative persona that must be denied (used in
+step 5). The code below uses these seeded values; a live deployment uses real identities
+from the connected Logto organization.
 </Aside>
 
-<Aside type="note" title="The SDK is partner-neutral — this page uses a reference demo">
-PaloNexus core is about **agents, owners, delegations, tasks, resources, and decisions** —
-not any specific identity provider (IdP) or protected resource. This page uses the **runbooks** demo resource
-(`runbooks-api:/runbooks/…`, action `runbooks:read`) and the Northstar/Logto reference seed
-because they're concrete and runnable — but they are **one reference integration, not a
-requirement**. Any resource and scope work the same way: swap in `payments-api` /
-`payments:write`, point at any SCIM (System for Cross-domain Identity Management) IdP (Logto is just the reference), and the calls below are
-unchanged. The demo's service→scope mapping lives in `palonexus.reference`; the generic core
-ships without it.
+<Aside type="note" title="Supported stack">
+PaloNexus currently targets organizations that use [Logto](https://logto.io) as their IAM
+solution, run Kubernetes in the cloud, and want to govern Python-based AI agents. The SDK
+core models **agents, owners, delegations, tasks, resources, and decisions**, so the
+`runbooks` sample resource (`runbooks-api:/runbooks/…`, action `runbooks:read`) is not
+special: any resource and scope follow the same calls — swap in `payments-api` /
+`payments:write` and the code below is unchanged. The sample service→scope mapping lives in
+`palonexus.reference`; the core ships without it.
 </Aside>
 
-## The path you're about to walk
+## The seven steps
 
-Seven steps, one denial that turns into an approval, and a proof at the end:
+From install to a verified audit chain:
 
 ```mermaid
 flowchart LR
@@ -60,30 +56,30 @@ flowchart LR
     O --> R[register agent<br/>owner + sponsor]
     R --> C{task.check}
     C -->|deny-by-default| D[needs approval]
-    D --> AP[Maya approves<br/>Delegation VC]
+    D --> AP[sponsor approves<br/>Delegation VC]
     AP --> AU[task.authorize<br/>allow]
     AU --> V[(verify_chain<br/>audit proof)]
 ```
 
-*The ten-minute first-success path: install, spin up the offline control plane, register an
-authority-bound agent, watch the regulated call get denied by default, have the approver grant a
+*The quickstart path: install, spin up the offline control plane, register an
+authority-bound agent, see the regulated call denied by default, have the approver grant a
 time-boxed delegation, re-authorize to a clean allow, and verify the audit chain.*
 
 <Aside type="tip" title="Run it in the browser first — no install">
 The operator portal ships an in-browser **SDK playground** (`/playground`) that runs the same
-canonical `PaloNexus.offline()` hero flow you'll build below — pick a persona, edit the governed
+canonical `PaloNexus.offline()` end-to-end governed flow shown below — pick a persona, edit the governed
 call, and run register → deny → delegate → approve → succeed with no `pip install`, no cluster,
 and no API key.
 </Aside>
 
-The same loop has a portal face. On a live cluster, the Day-0 onboarding wizard walks an
-operator through exactly these beats — connect your IdP (**Logto in the demo**), seed the demo
-data, register the first agent, then run the hero flow:
+The same flow is available in the portal. On a live cluster, the Day-0 onboarding wizard walks an
+operator through the same sequence — connect the Logto IdP, seed sample data, register the
+first agent, then run the end-to-end governed flow (register → deny → approve → succeed):
 
 ![PaloNexus Day-0 onboarding wizard with step 1 'Connect Logto' active; a tenant-connected panel confirms the sandbox Logto tenant with a stored secret and offers Validate and Skip/offline buttons](/docs/screenshots/onboarding.png)
 
-*Reference demo: the Day-0 wizard's 'Connect Logto' step uses the demo's reference Logto IdP.
-Production deployments connect their own OpenID Connect (OIDC)/SCIM IdP — see
+*The Day-0 wizard's 'Connect Logto' step connects the organization's Logto tenant via
+OpenID Connect (OIDC)/SCIM — see
 [Connect agents to enterprise authority](/docs/concepts/enterprise-iam/). This quickstart
 reproduces the same loop entirely offline.*
 
@@ -96,8 +92,8 @@ client, and the crypto layer. Framework bindings are opt-in extras.
 pip install palonexus
 ```
 
-You don't need the LangChain or LangGraph extras for this quickstart — the base package
-ships the offline control plane and the hero flow.
+The LangChain and LangGraph extras aren't needed for this quickstart — the base package
+ships the offline control plane and the end-to-end governed flow.
 
 ## 2. Initialize
 
@@ -145,9 +141,9 @@ The env vars `from_env()` reads: `PALONEXUS_CONTROL_PLANE_URL`, `PALONEXUS_MGMT_
 `PALONEXUS_IDP_URL`, `PALONEXUS_API_KEY`, `PALONEXUS_TENANT_ID`, `PALONEXUS_AGENT_TOKEN`, and
 `PALONEXUS_OFFLINE`. See [Configuration & environment](/docs/sdk/config-env/).
 
-## 3. Run the hero flow
+## 3. Run the end-to-end flow
 
-`PaloNexus.offline()` gives you an in-memory control plane that reproduces the real
+`PaloNexus.offline()` provides an in-memory control plane that reproduces the real
 deny-by-default contract. `run_hero_flow` drives the complete
 register → deny → delegate → approve → succeed story end to end:
 
@@ -178,14 +174,14 @@ subject    : ethan.park@northstar.example (owner, devops-incident)
 audit      : 2 hash-chained events, chain_ok = True
 ```
 
-That's the whole platform value in one function: a regulated action **cannot** happen until
-a human with the right authority (Maya, who holds `org:agents:approve`) approves it, and the
-decision is recorded on a tamper-evident audit chain.
+This is the core contract: a regulated action can't happen until a human with the
+`org:agents:approve` permission approves it, and the decision is recorded
+on a tamper-evident audit chain.
 
-## 4. The same flow, spelled out
+## 4. Run the flow step by step
 
 `run_hero_flow` is a convenience wrapper. Here is exactly what it does, using the public SDK
-surface — this is the shape of code you'll write in a real agent:
+surface — the shape of code a real agent uses:
 
 ```python
 from palonexus import PaloNexus
@@ -224,7 +220,7 @@ with PaloNexus.offline() as pn:
         )
         print("2) delegation:", deleg.id, deleg.status)
 
-        # In production, Maya clicks "Approve" in the portal. Offline, we drive the
+        # In production, the approver clicks "Approve" in the portal. Offline, drive the
         # in-memory control plane to simulate that human action:
         pn._fake.approve_delegation(deleg.id, approver="maya.chen@northstar.example")
 
@@ -251,7 +247,7 @@ with PaloNexus.offline() as pn:
 
 <Aside type="caution" title="Approval is a human action">
 `pn._fake.approve_delegation(...)` exists **only in offline mode** to stand in for a real
-person. In a live deployment the approval comes from the approver (Maya) in the
+person. In a live deployment the approval comes from the approver in the
 [Authority Delegation console](/docs/develop/delegations-and-approvals/) or via the agent-idp API — the
 SDK never approves on a human's behalf.
 </Aside>
@@ -303,8 +299,8 @@ with PaloNexus.offline() as pn:
 `trace_id`. It does **not** raise on deny — inspect `allow` and `needs_approval`. It still
 raises `ControlPlaneUnavailable` if the decision point is unreachable (fail closed) — a
 `check` is never a silent allow. `task.authorize(...)` is `check` that **raises** on
-non-allow — use it where you want the deny to stop execution. The typed error tree (catch
-the one you care about):
+non-allow — use it where the deny must stop execution. The typed error tree (catch
+the relevant one):
 
 {/* no-doctest: illustrative fragment — uses `task` from a neighbouring block (not standalone-runnable) */}
 ```python
@@ -333,10 +329,10 @@ the human decides:
 deleg = task.await_delegation(deleg.id, timeout=600)   # blocks until approved/denied/expired
 ```
 
-## 5. See deny-by-default bite
+## 5. Test the deny path
 
-Swap Ethan for **Claire Evans** — the seeded *negative* persona for this scenario — and the
-same call is a **hard deny**, not a needs-approval. There is no delegation she can request:
+Swap the subject for the seeded *negative* persona and the same call is a **hard deny**,
+not a needs-approval. No delegation can be requested:
 
 ```python
 from palonexus import PaloNexus
@@ -361,7 +357,7 @@ allow: False | needs_approval: False
 reason: claire.evans@northstar.example is not authorized for scenario devops-incident
 ```
 
-This is the difference the SDK makes obvious: `needs_approval` means *ask a human*; a flat
+The two outcomes are distinct: `needs_approval` means *ask a human*; a flat
 deny with neither `allow` nor `needs_approval` means *no path forward*. See
 [Glossary](/docs/getting-started/glossary/) for `deny-by-default`, `TBAC`, `Membership VC`,
 and the rest of the vocabulary.
@@ -401,7 +397,7 @@ print(report)                 # {'delegations_revoked': N, 'agents_suspended': �
 
 <TabItem label="Run the platform locally">
 
-Two things you can run locally: **this docs site**, and the **platform** itself.
+Two things run locally: **this docs site**, and the **platform** itself.
 
 ## Run the docs site locally
 
@@ -442,8 +438,8 @@ When it finishes, the consoles are port-forwarded:
 
 Tear it down with `make demo-down`.
 
-Open the portal's **Tenant settings** to see the organization defaults applied to every new
-agent you register — the org id, the environment, and the default data-class and risk-tier:
+Open the portal's **Tenant settings** to see the organization defaults applied to every
+newly registered agent — the org id, the environment, and the default data-class and risk-tier:
 
 ![PaloNexus tenant settings form showing the organization ID, a sandbox environment, and default data-class (internal) and risk-tier (medium) selectors applied to new agent registrations, beside a summary of current values](/docs/screenshots/tenant-setup.png)
 
@@ -459,7 +455,7 @@ make smoke           # boot the binary, exercise allow(200)/deny(403) over ext_a
 make render          # render the full Kustomize manifest set (no apply)
 ```
 
-## See the hero flow
+## See the end-to-end flow
 
 With the platform up, run the narrated walkthrough (deny → human-approve → allow → revoke,
 model allowlist, audit verify):
@@ -476,19 +472,19 @@ and [the autonomous flow](/docs/develop/autonomous-flow/).
 
 </Tabs>
 
-## Next
+## Next steps
 
-Built and governed your first agent (tab 1)?
+After the SDK walkthrough (tab 1):
 
 - [Guard a LangChain tool](/docs/sdk/langchain/) — drop the gate into `create_agent`.
 - [Govern a LangGraph node (HITL)](/docs/sdk/langgraph/) — a human-in-the-loop (HITL)
   deny → interrupt → approve → resume flow, with the durable-checkpointer requirement.
 - [SDK overview & layers](/docs/sdk/) and the [API reference](/docs/sdk/reference/).
-- [Temporary elevation walkthrough (INC-4821)](/docs/develop/guides/temporary-elevation-walkthrough/) —
-  the full hero flow, narrated end to end.
+- [Temporary elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/) —
+  the end-to-end governed flow, narrated.
 - [Glossary](/docs/getting-started/glossary/) — every acronym used in these docs.
 
-Running the platform (tab 2)?
+After running the platform locally (tab 2):
 
-- [Deploy your own agent](/docs/develop/deploy-an-agent/)
-- [Self-host on your cluster](/docs/operations/self-hosting/)
+- [Deploy an agent](/docs/develop/deploy-an-agent/)
+- [Self-host the platform](/docs/operations/self-hosting/)

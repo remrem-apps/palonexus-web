@@ -56,8 +56,8 @@ agent boundary never holds standing secrets.
 ## PaloNexus Lifecycle
 
 Workforce-linked governance: directory sync, stable identity, and the revocation that
-cascades when the humans behind an agent's authority change. Runs **alongside** a
-workforce identity provider (IdP) — Okta / Entra ID / Google Workspace — shipping in the `agent-idp` service. See
+cascades when the humans behind an agent's authority change. Runs **alongside** the
+workforce identity provider (IdP) — Logto is the supported IAM — shipping in the `agent-idp` service. See
 [Connect Agents to Enterprise Authority](/docs/concepts/enterprise-iam/).
 
 | Capability | What it does | Status | Documented in |

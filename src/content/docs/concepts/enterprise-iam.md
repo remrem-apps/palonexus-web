@@ -1,6 +1,6 @@
 ---
 title: Connect Agents to Enterprise Authority
-description: Tie agent authority to your workforce IdP — joiner/mover/leaver changes cascade into automatic delegation revocation and orphan quarantine, agents stay accountable to a human owner, and short-lived runtime credentials are minted only from valid human-backed authority. Includes the IdP support model. PaloNexus is IdP-neutral, and any OIDC/SCIM IdP (Okta, Entra ID, Auth0, Ping, Google Workspace, Cognito, Keycloak, Logto) plugs in via standard surfaces.
+description: Tie agent authority to the workforce IdP — joiner/mover/leaver changes cascade into automatic delegation revocation and orphan quarantine, agents stay accountable to a human owner, and short-lived runtime credentials are minted only from valid human-backed authority. Includes the IdP support model. Logto is the supported IAM; architecturally the core consumes any OIDC/SCIM IdP through standard surfaces.
 sidebar:
   order: 6
 ---
@@ -13,22 +13,22 @@ agents, refused credentials, and a durable, reason-coded remediation log. Runtim
 sandbox lifecycle is about containers; this lifecycle is about **organizational
 authority**.
 
-PaloNexus runs **alongside** your workforce identity provider (IdP) — Okta, Entra ID, Google Workspace,
-JumpCloud — it does not replace it. The IdP stays the source of truth for employees;
+PaloNexus runs **alongside** the workforce identity provider (IdP) — Logto is the
+supported IAM — it does not replace it. The IdP stays the source of truth for employees;
 PaloNexus is the *agent* identity, delegation, authorization, and audit layer
 that sits next to it and keeps agent authority tied to current human authority.
 
 ## Division of ownership: the workforce IdP owns humans, PaloNexus owns agents
 
-The whole model rests on a clean split of responsibility. **Your workforce IdP owns humans**
-(Logto in the demo) — it is the IdP that holds employees and groups (kept current by SCIM, the System for Cross-domain Identity Management), the organization
+The whole model rests on a clean split of responsibility. **The workforce IdP owns humans**
+(Logto) — it is the IdP that holds employees and groups (kept current by SCIM, the System for Cross-domain Identity Management), the organization
 roles people are assigned, the `org:agents:*` authority scopes those roles carry, and the
 scenario API resources/scopes (`runbooks:read`, `incidents:read`, …). **PaloNexus owns
 agents** — it issues each agent a cryptographic identity (`did:key` + a Membership Verifiable Credential (VC)),
 records accountable ownership, classifies targets in its asset-type taxonomy, and mints the
 task-scoped **delegations** that let an agent act. The bridge between the two halves is a
 human: a delegation is only valid when the person granting it *holds* the matching authority
-in the workforce IdP (Logto in the demo).
+in the workforce IdP (Logto).
 
 The diagram reads top-to-bottom on each side. On the left, SCIM populates the people that
 org roles are assigned to, and those roles carry the `org:agents:*` scopes plus the API
@@ -63,7 +63,7 @@ flowchart TB
   deleg -->|grants ability to act| aid
 ```
 
-*The workforce IdP (Logto in the demo) holds workforce identity, org roles, and the
+*The workforce IdP (Logto) holds workforce identity, org roles, and the
 `org:agents:*` and API scopes; PaloNexus holds agent identity, ownership, and delegations —
 and a human's authority is what authorizes each delegation.*
 
@@ -84,9 +84,9 @@ exercise authority that Logto records and PaloNexus enforces.
 | Temporary elevation (approvals) | — | **Owns** the queue + Security Token Service (STS) exchange | **Approves / denies** |
 | Audit trail | Logs its own admin events | **Owns** the hash-chained decision log | Reviews / verifies |
 
-> **Logto is the reference IdP used in the demo seed.** The "Workforce IdP / IAM" column
-> describes the IdP's role generically — any OpenID Connect (OIDC) / SCIM-compliant IdP (Okta, Microsoft Entra
-> ID, Auth0, Ping, Google Workspace, Amazon Cognito, Keycloak, Logto) fills it the same way.
+> **Logto is the supported workforce IdP.** The "Workforce IdP / IAM" column
+> describes the IdP's role generically — architecturally, any OpenID Connect (OIDC) / SCIM-compliant IdP
+> could fill it the same way through the standard surfaces.
 > See the [IdP support model](#idp-support-model) below.
 
 ## The problem federation doesn't solve
@@ -103,7 +103,7 @@ governing AI agents:
 - When authority disappears — an owner is disabled, an approver leaves, a group is
   removed — nothing automatically **revokes** what the agent was allowed to do.
 
-PaloNexus closes that gap without becoming your IdP. SCIM directory sync is authoritative
+PaloNexus closes that gap without becoming the IdP. SCIM directory sync is authoritative
 for lifecycle and organizational state; token claims are auth-time context only.
 
 ## The two phases as one control loop
@@ -203,62 +203,59 @@ audience, proof, and TTL.
 ## Permission model: org roles → agent authority
 
 The `org:agents:*` scopes are the concrete authority an org role carries. The table below
-maps the five personas of the **devops-incident** demo scenario (the incident-response
-scenario these docs use throughout) to the scopes their seeded org roles at Northstar Corp
-— the fictional demo organization — grant, exactly as the `seed-logto` Northstar fixture
+maps the five roles of the **devops-incident** sample scenario (the incident-response
+scenario these docs use throughout) to the scopes their seeded org roles at the sample
+organization grant, exactly as the `seed-logto` fixture
 assigns them. Read each row as "what
 this person is allowed to do with agents":
 
-| Persona | Seeded org role(s) | `own` | `sponsor` | `approve` | `operate` | `audit` |
+| Role | Seeded org role(s) | `own` | `sponsor` | `approve` | `operate` | `audit` |
 |---|---|:--:|:--:|:--:|:--:|:--:|
-| **Maya Chen** — DevOps sponsor/approver | `org_devops_service_owner`, `org_agent_owner`, `org_agent_sponsor`, `org_agent_approver` | ✅ | ✅ | ✅ | — | — |
-| **Ethan Park** — DevOps agent owner | `org_devops_service_owner`, `org_agent_owner`, `org_agent_operator` | ✅ | — | ✅ | ✅ | — |
-| **Arjun Mehta** — DevOps operator | `org_agent_operator` | — | — | — | ✅ | — |
-| **Omar Haddad** — Security triage owner/approver | `org_agent_owner`, `org_agent_sponsor`, `org_agent_approver`, `org_agent_auditor` | ✅ | ✅ | ✅ | — | ✅ |
-| **Claire Evans** — negative-test employee | `org_negative_test_employee` | — | — | — | — | — |
+| **DevOps sponsor/approver** | `org_devops_service_owner`, `org_agent_owner`, `org_agent_sponsor`, `org_agent_approver` | ✅ | ✅ | ✅ | — | — |
+| **DevOps agent owner** | `org_devops_service_owner`, `org_agent_owner`, `org_agent_operator` | ✅ | — | ✅ | ✅ | — |
+| **DevOps operator** | `org_agent_operator` | — | — | — | ✅ | — |
+| **Security triage owner/approver** | `org_agent_owner`, `org_agent_sponsor`, `org_agent_approver`, `org_agent_auditor` | ✅ | ✅ | ✅ | — | ✅ |
+| **Negative-test employee** | `org_negative_test_employee` | — | — | — | — | — |
 
 > **Scope grants the ability; domain authority gates the use.** Holding `org:agents:approve`
-> lets a persona approve delegations *in principle*, but F5 still checks they hold real
-> authority over the **specific** resource or task. Ethan can approve a DevOps incident
-> delegation (he is the DevOps service owner) but is denied approving a Finance
-> reconciliation; Claire, with no agent authority at all, is denied every privileged
-> action. That deny-by-default is the point of the negative-test personas.
+> lets a role approve delegations *in principle*, but F5 still checks that the approver holds real
+> authority over the **specific** resource or task. The DevOps agent owner can approve a DevOps incident
+> delegation (as the DevOps service owner) but is denied approving a Finance
+> reconciliation; the negative-test employee, with no agent authority at all, is denied every privileged
+> action. That deny-by-default is the point of the negative persona.
 
-> **Reference demo (Logto).** Logto is the **demo/reference IdP** PaloNexus ships its
-> walkthroughs and seeded data against — it is **not** a required dependency. The `seed-logto`
-> fixture, the `logto-m2m` Secret, the `LOGTO_*` env vars, and the portal's
-> `/settings/logto` connector page below all belong to this reference demo. Production
-> deployments keep their own workforce IdP and integrate it via standard OIDC/SCIM. See the
+> **Logto wiring.** The `seed-logto` fixture seeds this sample identity model into a Logto
+> tenant for evaluation and testing; the `logto-m2m` Secret, the `LOGTO_*` env vars, and the
+> portal's `/settings/logto` connector page below wire a deployment to its Logto tenant. See the
 > [IdP support model](#idp-support-model) below.
 
-In the demo you connect Logto and confirm exactly these credentials and the directory sync
+Connect Logto and confirm exactly these credentials and the directory sync
 from the portal's **Logto connector** page; secrets are validated server-side and never
 exposed to the browser:
 
 ![Logto connector settings showing a connected sandbox tenant with read-only base-URL, management-API and M2M app-ID fields sourced from environment secrets, and a directory-sync panel reporting an OK sync of six created identities](/docs/screenshots/settings-logto.png)
 
-*Reference demo: the portal's **Logto connector** page validating the demo's sandbox Logto
-tenant. This connector is specific to the Logto reference IdP; production deployments
-integrate their own IdP via OIDC/SCIM — see the [IdP support model](#idp-support-model)
+*The portal's **Logto connector** page validating a sandbox Logto
+tenant — see the [IdP support model](#idp-support-model)
 below.*
 
 ## IdP support model
 
-PaloNexus is **IdP-neutral**. It does not authenticate your workforce, store employee
-records, or replace your identity provider — it sits **behind** your existing workforce IAM
-and consumes it through open standards. Your workforce IdP stays the source of truth for
+**Logto is the supported workforce IAM.** PaloNexus does not authenticate the workforce, store employee
+records, or replace the identity provider — it sits **behind** the existing workforce IAM
+and consumes it through open standards. The workforce IdP stays the source of truth for
 human identity (who works here, what groups and org roles they hold, and whether they are
-active); PaloNexus owns the layer your IdP has no concept of — **AI agents, delegation, task
-authorization, temporary elevation, and a verifiable authority trail**. Any
-OIDC/SCIM-compliant IdP — **Okta, Microsoft Entra ID, Auth0, Ping, Google Workspace, Amazon
-Cognito, Keycloak, Logto**, or any other — plugs into exactly the same surfaces.
+active); PaloNexus owns the layer the IdP has no concept of — **AI agents, delegation, task
+authorization, temporary elevation, and a verifiable authority trail**. As an architecture
+fact, the core is IdP-agnostic: any OIDC/SCIM-compliant IdP — Okta, Microsoft Entra ID, Auth0,
+Ping, Google Workspace, Amazon Cognito, Keycloak — could plug into exactly the same surfaces.
 
 ### How an IdP connects
 
-The diagram reads left to right. Your workforce IdP exposes **standard surfaces** — OIDC
+The diagram reads left to right. The workforce IdP exposes **standard surfaces** — OIDC
 sign-in plus a JSON Web Key Set (JWKS) endpoint, SCIM / directory sync (or API sync / webhooks) — and PaloNexus
 consumes them to learn a **stable employee subject**, **groups**, **org roles**, and
-**lifecycle status**. From that human authority, PaloNexus runs everything your IdP does not:
+**lifecycle status**. From that human authority, PaloNexus runs everything the IdP does not:
 agent identity, human-authorized delegation, the `/authz` decision, time-boxed elevation, and
 the audit chain. The IdP never learns about agents; PaloNexus never re-invents humans.
 
@@ -287,29 +284,29 @@ flowchart LR
   authz --> audit
 ```
 
-*Your workforce IdP supplies human identity through standard surfaces (OIDC/JWKS for sign-in,
+*The workforce IdP supplies human identity through standard surfaces (OIDC/JWKS for sign-in,
 SCIM/directory sync for lifecycle and org state); PaloNexus consumes that authority and owns
 agents, delegation, the `/authz` decision, temporary elevation, and audit.*
 
 ### Three tiers: demo, supported, production
 
-"Which IdPs does PaloNexus support" has three honest answers. The **demo** ships against one
-concrete reference IdP so walkthroughs and seed data are reproducible; **supported** is the
-standards surface any IdP integrates through; **production** is your own IdP, brought via
-those same standards.
+"Which IdPs does PaloNexus support" has three honest answers. The **demo** tier is the
+seeded evaluation setup, so walkthroughs and seed data are reproducible; **supported** is
+Logto, the workforce IAM PaloNexus ships an end-to-end integration for; **production** is
+the organization's own Logto tenant, wired via the same standard surfaces.
 
 | Tier | What it means | Examples | How it's wired | Status |
 |---|---|---|---|---|
-| **Demo IdP** | The concrete reference IdP PaloNexus seeds its Northstar demo data into, so every walkthrough is reproducible. **Not** a required dependency. | **Logto** (sandbox tenant) | `seed-logto` fixture, `LOGTO_*` env, the `logto-m2m` Secret, and the portal `/settings/logto` connector — all demo-only | Shipped (reference demo) |
-| **Supported IdP** | Any OIDC/SCIM-compliant IdP can supply human identity through the standard surfaces below. | Okta, Microsoft Entra ID, Auth0, Ping, Google Workspace, Amazon Cognito, Keycloak, Logto, and any OIDC/SCIM IdP | OIDC sign-in + JWKS (`OIDC_ISSUER` / `OIDC_AUDIENCE` / `OIDC_JWKS_URL`); SCIM / directory sync into agent-idp `/v1/directory` | Standards-based (see honesty note) |
-| **Production customer IdP** | Your own workforce IdP, in your tenant, kept as the source of truth. PaloNexus runs beside it and is configured to verify its tokens and consume its directory. | Whatever your org already runs | Point OIDC env at your issuer/JWKS (the `oidc` component) + feed your directory into agent-idp — see [Bring your own IdP](/docs/operations/bring-your-own-idp/) | Bring-your-own via OIDC/SCIM |
+| **Demo IdP** | The Logto tenant the sample identity model is seeded into, so every walkthrough is reproducible — an evaluation and testing tool. | **Logto** (sandbox tenant) | `seed-logto` fixture, `LOGTO_*` env, the `logto-m2m` Secret, and the portal `/settings/logto` connector | Shipped (evaluation seed) |
+| **Supported IdP** | Logto, supported end to end. Architecturally, any OIDC/SCIM-compliant IdP can supply human identity through the standard surfaces below. | **Logto**; Okta, Microsoft Entra ID, Auth0, Ping, Google Workspace, Amazon Cognito, Keycloak via standard surfaces | OIDC sign-in + JWKS (`OIDC_ISSUER` / `OIDC_AUDIENCE` / `OIDC_JWKS_URL`); SCIM / directory sync into agent-idp `/v1/directory` | Logto supported; otherwise standards-based (see honesty note) |
+| **Production customer IdP** | The organization's own workforce IdP, in its own tenant, kept as the source of truth. PaloNexus runs beside it and is configured to verify its tokens and consume its directory. | The organization's Logto tenant | Point OIDC env at the tenant's issuer/JWKS (the `oidc` component) + feed the directory into agent-idp — see [Bring your own IdP](/docs/operations/bring-your-own-idp/) | Bring-your-own via OIDC/SCIM |
 
 :::note[Logto is the first supported IdP]
-Logto is more than the demo seed — it is the **first IdP PaloNexus ships an end-to-end
+Logto is the **first IdP PaloNexus ships an end-to-end
 integration for** (the `seed-logto` seeder, the portal connector, and a worked
 [bring-your-own-Logto runbook](/docs/operations/bring-your-own-idp/)). It is **supported
 now**, not the only future one: Okta, Microsoft Entra ID, Auth0, and any OIDC/SCIM provider
-integrate through the identical standard surfaces below, and shipped vendor connectors for
+can integrate through the identical standard surfaces below, and shipped vendor connectors for
 them are near-term roadmap.
 :::
 
@@ -327,22 +324,22 @@ directory model is the workforce-sync integration point.
 | **Groups + org roles** | Group / role membership | mapped to `org:agents:{own,sponsor,approve,operate,audit}` authority | Org roles carry the agent-authority scopes a human exercises |
 | **Lifecycle status** | Joiner / mover / leaver | the revocation cascade (runs at end of every directory sync) | A deactivated employee orphans their agents and invalidates their delegations |
 
-### Reference demo setup (Logto)
+### Evaluation seed setup (Logto)
 
-Everything Logto-specific in PaloNexus belongs to the **reference demo** — it is how the
-project ships reproducible walkthroughs and seeded personas, **not** a production requirement.
-These pages are demo-only:
+The seed populates a Logto tenant with a reproducible sample identity model — an
+evaluation and testing tool, **not** a production requirement.
+These pages cover the seed:
 
-- [Environment variables → Reference demo seeder (Logto)](/docs/reference/env-vars/) — the
+- [Environment variables](/docs/reference/env-vars/) — the
   `LOGTO_*` seeder variable table.
 - [DOKS runbook → Step 4: Seed the demo identity model](/docs/operations/doks-runbook/) — the
   seed step (portal `/settings/seed` button or the `seed-logto` CLI).
-- [Quickstart](/docs/getting-started/quickstart/) — the demo flows (your first authority-bound
+- [Quickstart](/docs/getting-started/quickstart/) — the guided flows (a first authority-bound
   agent, plus the "Run the platform locally" tab).
 
-In a production deployment you would skip `seed-logto`/`LOGTO_*`/the `logto-m2m` Secret and
-instead point the OIDC env vars at your own issuer and feed your own directory into
-agent-idp.
+A production deployment skips `seed-logto`/`LOGTO_*`/the `logto-m2m` Secret and
+instead points the OIDC env vars at the production issuer and feeds the production
+directory into agent-idp.
 
 ### Honesty: standards vs. shipped connectors
 
@@ -350,9 +347,10 @@ To set expectations precisely:
 
 - **What is built and enforced today:** OIDC JWT verification against JWKS
   (`OIDC_ISSUER`/`OIDC_AUDIENCE`/`OIDC_JWKS_URL`), and the agent-idp `/v1/directory`
-  model that is the workforce-sync integration point. The demo's concrete IdP is **Logto**,
+  model that is the workforce-sync integration point. The supported IdP is **Logto**,
   wired through the `seed-logto` fixture and the portal connector.
-- **What "supported" means:** any IdP integrates through the **standard** OIDC and
+- **What "supported" means:** Logto ships with an end-to-end integration; other IdPs
+  can integrate through the **standard** OIDC and
   SCIM/directory surfaces above. Where PaloNexus does **not** yet ship a vendor-specific,
   one-click connector (e.g. a turnkey Okta or Entra ID connector with branded setup UI),
   integration is via **standard OIDC/SCIM** rather than a pre-built vendor module. We say so

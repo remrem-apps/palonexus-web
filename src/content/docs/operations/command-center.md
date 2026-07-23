@@ -42,7 +42,7 @@ departments come from the same directory sync that drives the
   vs **ungoverned**.
 - **Posture** — each agent lands in exactly one bucket, with a fixed precedence:
   **`owner_inactive` wins** over the others (an agent whose accountable human has
-  left or been suspended is the finding you act on first), then **`blocked`**, then
+  left or been suspended is the finding to act on first), then **`blocked`**, then
   **`active_healthy`**. **Retired agents are excluded** from posture — they are not a
   risk finding, they are done.
 - **By owner / by department** — bar breakdowns from the live directory join, with
@@ -74,16 +74,16 @@ decided* and *on what authority*:
 | `opa` | the org-wide Open Policy Agent (OPA) Rego veto (deny-overrides) |
 | `delegation` | the task-scoped, human-approved delegation check |
 
-- **Task chip** — the task the action was scoped to (e.g. `INC-4821`).
+- **Task chip** — the task the action was scoped to (for example, an incident id).
 - **Delegation chip** — on **delegation-allowed egress** records only, the record
   carries the delegation id and expiry (`delegationId` / `delegationExp`, epoch
   seconds). The chip shows the short delegation id, links into the **Authority
-  Delegation** tab, and renders a **live countdown to expiry** — you can watch a
-  temporary elevation approach its cutoff in real time. This is the same delegation
+  Delegation** tab, and renders a **live countdown to expiry** — a temporary
+  elevation can be watched approaching its cutoff in real time. This is the same delegation
   minted in the [temporary elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/).
 
 A deny with an `opa` chip and a deny with a `delegation` chip are different
-conversations — the chip tells you which layer to go look at before you touch
+conversations — the chip names which layer to inspect before touching
 anything.
 
 ### 4. Allow / deny counters
@@ -118,7 +118,7 @@ The portal is **not exposed to the public internet** and has **no login of its o
 today**. Reachability is the access control:
 
 - **Tailnet (production path)** — the portal ships a Tailscale node manifest; with
-  `TS_AUTHKEY` set it joins your tailnet and is reachable at its tailnet name
+  `TS_AUTHKEY` set it joins the tailnet and is reachable at its tailnet name
   (e.g. `http://portal.<your-tailnet>.ts.net`).
 - **Port-forward (always-available fallback):**
 
@@ -132,14 +132,14 @@ the rest of the consoles.
 
 ## Scope limits
 
-Stated plainly, so you can plan around them:
+Stated plainly, so they can be planned around:
 
 - **The explorer window is the ring.** The in-portal audit explorer reads the
   control plane's in-memory ring — the **last 1000 decision records**. Durable
   history lives in **Loki** (`service.name=control-plane-audit`); query it through
   Grafana for anything older.
 - **No alerting or paging.** The Command Center is a live console, not an alerting
-  system — nothing pages you. Build alerts on the Prometheus metrics
+  system — nothing pages an operator. Build alerts on the Prometheus metrics
   ([Observability](/docs/operations/observability/) has samples).
 - **No portal sign-in / SSO yet.** Access is tailnet-or-port-forward only; portal
   SSO is planned (see the [feature matrix](/docs/concepts/feature-matrix/)). Do not
@@ -148,6 +148,6 @@ Stated plainly, so you can plan around them:
 ## Related
 
 - [Architecture § Consoles](/docs/concepts/architecture/#consoles) — every portal tab and what backs it
-- [Temporary elevation walkthrough (INC-4821)](/docs/develop/guides/temporary-elevation-walkthrough/) — the flow whose delegation chip and countdown you see on the feed
+- [Temporary elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/) — the flow whose delegation chip and countdown appear on the feed
 - [Observability](/docs/operations/observability/) — metrics, Loki audit shipping, alert baselines
 - [Connect agents to enterprise authority](/docs/concepts/enterprise-iam/) — ownership, SCIM sync, and the revocation cascade behind the fleet panel

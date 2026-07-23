@@ -1,6 +1,6 @@
 ---
 title: Core concepts
-description: The vocabulary you need — the authority graph, delegation validation, just-in-time access, the one authorization contract, agent identity, delegations, and the registry.
+description: The essential vocabulary — the authority graph, delegation validation, just-in-time access, the one authorization contract, agent identity, delegations, and the registry.
 sidebar:
   order: 2
 ---

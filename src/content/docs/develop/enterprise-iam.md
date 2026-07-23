@@ -20,12 +20,12 @@ authority, cascades revocation when people leave, and mints short-lived runtime
 credentials (agent tokens) that separate the **agent** subject from the **human**
 actor.
 
-Each feature ships a small stdlib-only CLI you run against a live `agent-idp`. This
+Each feature ships a small stdlib-only CLI that runs against a live `agent-idp`. This
 guide walks the whole loop end to end. For the data model and the decision rules see
 [Connect Agents to Enterprise Authority (concepts)](/docs/concepts/enterprise-iam/); for the raw endpoints see
 the [Enterprise IAM API](/docs/reference/enterprise-iam-api/).
 
-## What you'll do
+## What the walkthrough covers
 
 1. Sync a mock enterprise directory (two tenants) and run lifecycle mutations.
 2. Resolve employee sign-ins with token-vs-SCIM precedence.
@@ -73,7 +73,7 @@ the same version is idempotent — everyone comes back `unchanged`, with no dupl
 employees, because each person is keyed by a stable IdP `oid` (the SCIM `externalId`),
 never by email.
 
-Eight named personas anchor the scenarios across all six features: **Alice Chen**
+Eight seeded directory identities anchor the scenarios across all six features: **Alice Chen**
 (Engineering Manager), **Bob Patel** (site-reliability engineer, SRE), **Maya Singh** (Finance Approver),
 **Carlos Rivera** (Security Admin), **Dana Kim** (contractor), **Jordan Lee** (email
 change), **Priya Shah** (inactive former employee), and **Morgan Taylor** (manager who
@@ -296,8 +296,8 @@ to a clean, known state, then open the port-forwards:
 
 `demo-doks-seed.sh` wipes **only** the enterprise-IAM demo tables (`idp_employees`,
 `idp_groups`, `idp_syncs`, `idp_agent_governance`, `idp_gov_delegations`,
-`idp_revocations_log`, `idp_tokens`) — the crypto-egress tables used by the agent hero
-flow (the [temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/))
+`idp_revocations_log`, `idp_tokens`) — the crypto-egress tables used by the end-to-end
+governed flow (the [temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/))
 are left intact — then syncs the directory, governs + activates the agents, grants
 a few authorized delegations, replays sign-ins, and runs an initial cascade so the
 `hr-bot` orphan shows. The full runbook lives in `docs/DEMO.md` in the platform repo.

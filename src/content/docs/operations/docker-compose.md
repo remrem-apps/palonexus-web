@@ -5,9 +5,9 @@ sidebar:
   order: 3.5
 ---
 
-Kubernetes is the right home for PaloNexus in production, but you should not have
-to stand up a cluster, install Gateway API Custom Resource Definitions (CRDs), and learn Envoy Gateway just to
-*evaluate* it. The **Docker Compose** stack brings the full control layer up on a
+Kubernetes is the right home for PaloNexus in production, but *evaluating* it
+should not require standing up a cluster, installing Gateway API Custom Resource Definitions (CRDs), and learning
+Envoy Gateway. The **Docker Compose** stack brings the full control layer up on a
 laptop with one command, builds every image locally from the in-repo
 Dockerfiles, and ships a smoke test that proves the core decision contract:
 **allow (200) / deny (403) / needs-approval (401)**.
@@ -18,7 +18,7 @@ Dockerfiles, and ships a smoke test that proves the core decision contract:
 > (needs-approval / task-based access control, TBAC) path are fully enforced, gated on the real `agent-idp`
 > delegation authority.
 
-## What you get
+## What the stack includes
 
 `platform/deploy/compose/` is a complete, non-Kubernetes stack:
 
@@ -29,7 +29,7 @@ Dockerfiles, and ships a smoke test that proves the core decision contract:
 | **model-broker** | built from `model-broker/Dockerfile` (LiteLLM) | Holds the provider key; meters per-agent tokens back to the control-plane. | `8080` |
 | **postgres** | `postgres:16-alpine` | Durable registry (db `palonexus`) **and** agent-idp store (db `agentidp`). | `5432` (internal) |
 | **lgtm** | `grafana/otel-lgtm:0.8.1` | Grafana + Prometheus + Tempo + Loki + OpenTelemetry (OTel) collector in one container. | `3000` (Grafana), `4317`/`4318` (OTLP) |
-| **register** | `curlimages/curl` (one-shot) | Waits for the control-plane, then registers the demo agent + its regulated tool so the needs-approval path is exercisable. Exits `0`. | — |
+| **register** | `curlimages/curl` (one-shot) | Waits for the control-plane, then registers the sample agent + its regulated tool so the needs-approval path is exercisable. Exits `0`. | — |
 
 ### Topology
 
@@ -77,8 +77,8 @@ filter would: by setting the `X-Palonexus-Service` (ingress target) and
 `X-Palonexus-Actor` / `X-Palonexus-Action` / `X-Palonexus-Resource` (agent
 egress) headers and reading the HTTP status as the verdict. This is the **same
 handler, the same headers, and the same verdicts** that run in production — what
-compose omits is only the proxy hop that forwards an allowed request onward. If
-you need end-to-end request forwarding through Envoy, use the
+compose omits is only the proxy hop that forwards an allowed request onward. For
+end-to-end request forwarding through Envoy, use the
 [Kustomize self-hosting path](/docs/operations/self-hosting/).
 
 ## Bring it up
@@ -111,7 +111,7 @@ palonexus-register-1        register        Exited (0)
 > `distroless/static` — no shell, `curl`, or `wget` to self-probe with. Its
 > readiness is proven externally instead: the one-shot `register` service polls
 > `/readyz` before it registers (so a clean `Exited (0)` means the control-plane
-> answered), and `./smoke.sh` asserts `/authz`. You can probe it yourself at
+> answered), and `./smoke.sh` asserts `/authz`. Probe it directly at
 > `http://localhost:8181/readyz` and `http://localhost:9191/healthz`.
 
 ## Smoke test
@@ -155,15 +155,15 @@ curl -s -D - -o /dev/null \
 ```
 
 `echo` (public) and `orders` (private) are self-seeded by the control-plane at
-startup. The agent (`northstar-devops-incident-agent`, with `runbooks-operator`
+startup. The sample agent (`northstar-devops-incident-agent`, with `runbooks-operator`
 on its egress allowlist) and the regulated tool (`runbooks-operator`,
 `dataClass: regulated`) are registered by the one-shot `register` service via the
 management API — both persisted in Postgres, so they survive restarts.
 
 ## Environment
 
-The stack comes up healthy with every value at its default; you only need a real
-`OPENAI_API_KEY` for the model-broker to make live completions. Minimum-viable
+The stack comes up healthy with every value at its default; only a real
+`OPENAI_API_KEY` is needed for the model-broker to make live completions. Minimum-viable
 `.env`:
 
 | Variable | Default | Consumed by | Purpose |
@@ -199,15 +199,15 @@ Tempo. The control-plane exposes Prometheus metrics at
 ## Turning on OIDC (workforce identity)
 
 The default stack is anonymous-passthrough, identical to `overlays/dev`. To
-enforce real workforce identity, run **any OIDC issuer** (Okta, Microsoft Entra ID,
-Auth0, Keycloak, Dex, Logto, …) and set `OIDC_ISSUER` / `OIDC_JWKS_URL` (plus
-`OIDC_AUDIENCE`) on the control-plane service, then recreate it. PaloNexus is
-**identity-provider (IdP) neutral** — it needs an OIDC issuer for workforce sign-in, not any specific
-vendor:
+enforce real workforce identity, set `OIDC_ISSUER` / `OIDC_JWKS_URL` (plus
+`OIDC_AUDIENCE`) on the control-plane service to point at the organization's
+**Logto** tenant (the supported IdP), then recreate it. The core is
+IdP-agnostic by architecture — any standard OIDC issuer (Okta, Microsoft Entra ID,
+Auth0, Keycloak, Dex, …) verifies through the same three env vars:
 
 ```yaml
 # docker-compose.yml → services.control-plane.environment
-# (Logto shown as the demo; substitute your own OIDC issuer)
+# (point these at the Logto tenant's OIDC endpoints)
 OIDC_ISSUER:   https://<your-oidc-issuer>/oidc
 OIDC_JWKS_URL: https://<your-oidc-issuer>/oidc/jwks
 OIDC_AUDIENCE: palonexus
@@ -220,12 +220,11 @@ docker compose up -d control-plane
 With OIDC on, the `deny` smoke line returns **401** (invalid/absent credential)
 instead of 403, and authenticated callers carrying the right scope are allowed —
 the registry still decides public-vs-private. No IdP is bundled in this stack —
-point `OIDC_ISSUER`/`OIDC_JWKS_URL` at whatever OIDC issuer you already run. The
-**optional** `seed-logto` demo seed is a separate, Logto-specific path for loading
-the **demo** identity model of Northstar Corp, the fictional demo organization (Logto needs its own Postgres + migrations and
-is heavier than an evaluation laptop warrants); run it alongside and seed a tenant
-with the [`seed-logto`](/docs/concepts/enterprise-iam/) tool if you want the demo
-personas — otherwise bring your own OIDC/SCIM (System for Cross-domain Identity Management) IdP (see
+point `OIDC_ISSUER`/`OIDC_JWKS_URL` at an existing issuer. The **optional**
+[`seed-logto`](/docs/concepts/enterprise-iam/) seeder loads a sample identity
+model into a Logto tenant for evaluation and testing (Logto needs its own Postgres + migrations and
+is heavier than an evaluation laptop warrants); run it alongside to exercise the
+flows with sample workforce identities — or wire the organization's IdP directly (see
 [IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model)).
 
 ## Persistence, reset, and teardown
@@ -244,7 +243,7 @@ docker compose down -v       # remove containers AND volumes (full reset)
 ## When to graduate to Kubernetes
 
 Compose is for evaluation and local development. Move to the
-[Kustomize self-hosting path](/docs/operations/self-hosting/) when you need: real
+[Kustomize self-hosting path](/docs/operations/self-hosting/) for: real
 Envoy Gateway request forwarding (not just the decision), the OPA org-wide veto,
 network-enforced egress (proxy-only NetworkPolicies + the admission webhook),
 mutual TLS (mTLS) on the decision plane, and HA. Every env var is identical across both — only

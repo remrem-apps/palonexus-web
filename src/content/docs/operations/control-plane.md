@@ -1,6 +1,6 @@
 ---
 title: Control Plane (Go)
-description: The PaloNexus control-plane binary — the authz spine, the three listeners, the full environment-variable reference, build/test commands, and the fail-closed invariants you must not break.
+description: The PaloNexus control-plane binary — the authz spine, the three listeners, the full environment-variable reference, build/test commands, and the fail-closed invariants that must not be broken.
 sidebar:
   order: 2
 ---

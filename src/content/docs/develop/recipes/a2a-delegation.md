@@ -8,15 +8,15 @@ sidebar:
 When the triage agent can't finish a task alone it calls a **sub-agent** — an agent-to-agent
 ([A2A](/docs/getting-started/glossary/)) hop. That hop is **not** a trusted
 internal call — it is gated by the same `/authz` decision, and it carries the **original**
-[on-behalf-of](/docs/getting-started/glossary/) human subject — here Ethan Park, the owner
-persona from the Northstar demo scenario of the
+[on-behalf-of](/docs/getting-started/glossary/) human subject — here the owner from the
+scenario of the
 [temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/). The sub-agent acts
-for *Ethan*, on *Ethan's* task, with *Ethan's* delegation — it never gains standing authority of
+for the owner, on the owner's task, with the owner's delegation — it never gains standing authority of
 its own.
 
-This mirrors the platform's hero flow: while triaging INC-4821 (the walkthrough's sample
-incident), `incident-triage` reads a runbook (regulated → needs
-approval → Maya Chen, the approver persona, approves) and then A2A-calls a remediation
+This mirrors the platform's end-to-end governed flow: while triaging a sample
+incident, `incident-triage` reads a runbook (regulated → needs
+approval → the approver approves) and then A2A-calls a remediation
 sub-agent, the hop carrying `subject=ethan.park`.
 
 ```python
@@ -37,14 +37,14 @@ with pn.task(subject=OWNER, task_id="INC-4821", scenario="devops-incident", acto
     deleg = task.request_delegation(action="runbooks:read",
                                     resource="runbooks-api:/runbooks/db-failover",
                                     reason="INC-4821 db failover", ttl=300)
-    pn._fake.approve_delegation(deleg.id, approver=APPROVER)   # Maya approves (portal, live)
+    pn._fake.approve_delegation(deleg.id, approver=APPROVER)   # the approver approves (portal, live)
     task.authorize(action="runbooks:read", resource="runbooks-api:/runbooks/db-failover")
 
     # Hop 2 — A2A to the remediation sub-agent. The hop is itself gated; the decision
-    # carries the SAME on-behalf-of subject (Ethan), not the agent's own identity.
+    # carries the SAME on-behalf-of subject (the owner), not the agent's own identity.
     a2a = task.check(action="agent:invoke", resource="northstar-remediation-agent",
                      target_kind="agent")
-    assert a2a.needs_approval and a2a.subject == OWNER          # gated, on-behalf-of Ethan
+    assert a2a.needs_approval and a2a.subject == OWNER          # gated, on-behalf-of the owner
 
     pn._fake.grant(subject=OWNER, action="agent:invoke",
                    resource="northstar-remediation-agent", scenario="devops-incident")
@@ -66,7 +66,7 @@ A2A hop authorized, on-behalf-of: ethan.park@northstar.example
 - **The hop is gated.** `agent:invoke` to the sub-agent goes through `/authz` exactly like a
   tool or model call — there is no privileged "internal" path.
 - **Identity propagates, it doesn't escalate.** Both decisions record `subject=ethan.park`. The
-  sub-agent inherits Ethan's *task-scoped* authority for this task only; it cannot act as itself.
+  sub-agent inherits the owner's *task-scoped* authority for this task only; it cannot act as itself.
 - **Each edge is independently authorized.** Hop 1 (runbook) and hop 2 (sub-agent) each require
   their own grant — approving one does not silently widen the other.
 - **Auditable end to end.** `pn.audit.tail(task_id="INC-4821")` reconstructs the whole chain,

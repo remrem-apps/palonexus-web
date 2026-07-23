@@ -1,6 +1,6 @@
 ---
 title: "Recipe: multi-scenario agent"
-description: Govern several Northstar scenarios from one process — each with its own owner/sponsor/approver/negative persona — proving authority and the deny-by-default boundary are per-scenario, not global.
+description: Govern several seeded scenarios from one process — each with its own owner/sponsor/approver/negative persona — proving authority and the deny-by-default boundary are per-scenario, not global.
 sidebar:
   order: 5
 ---
@@ -10,15 +10,15 @@ a single process and shows that authority is **per-scenario**: each scenario's o
 deny-by-default until granted, and each scenario's **negative persona** is hard-denied — a person
 authorized in one scenario has no standing in another.
 
-The seeded scenarios (from `palonexus.testing.SEED_SCENARIOS`) carry the real personas of
-Northstar Corp, the fictional demo organization — `devops-incident` is the scenario the
+The seeded scenarios (from `palonexus.testing.SEED_SCENARIOS`) each carry a full
+owner/sponsor/approver/negative cast — `devops-incident` is the scenario the
 [temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/) narrates:
 
 | Scenario | Agent | Owner | Negative persona |
 |---|---|---|---|
-| `devops-incident` | northstar-devops-incident-agent | Ethan Park | Claire Evans |
-| `customer-support` | northstar-support-triage-agent | Sofia Ramos | Noah Patel |
-| `finance-reconciliation` | northstar-finance-recon-agent | Daniel Kim | Liam O'Sullivan |
+| `devops-incident` | `northstar-devops-incident-agent` | `ethan.park@northstar.example` | `claire.evans@northstar.example` |
+| `customer-support` | `northstar-support-triage-agent` | `sofia.martinez@northstar.example` | `noah.patel@northstar.example` |
+| `finance-reconciliation` | `northstar-finance-recon-agent` | `daniel.kim@northstar.example` | `liam.oconnor@northstar.example` |
 
 ```python
 from palonexus import PaloNexus
@@ -56,17 +56,17 @@ finance-reconciliation   negative denied · owner allowed-after-grant
 
 ## What this proves
 
-- **The boundary is per-scenario.** `Noah Patel` (negative for customer-support) being denied
+- **The boundary is per-scenario.** The customer-support negative persona being denied
   there says nothing about devops-incident — each scenario carries its own authority and its own
   red test case.
-- **No global allow.** Granting Sofia in `customer-support` does not grant Ethan in
-  `devops-incident`; every `(subject, action, resource)` is decided on its own.
+- **No global allow.** Granting the `customer-support` owner does not grant the
+  `devops-incident` owner; every `(subject, action, resource)` is decided on its own.
 - **One audit chain.** All scenarios append to the same tamper-evident chain;
   `pn.audit.tail(...)` filters by `task_id`, agent, or subject.
 
 This is the same authority model the seed's `AuthorityEngine` and the portal's
-[policy simulator](/docs/getting-started/glossary/) use — the offline fake mirrors it so you can
-fan an agent fleet out across scenarios in tests without a cluster.
+[policy simulator](/docs/getting-started/glossary/) use — the offline fake mirrors it so an
+agent fleet can fan out across scenarios in tests without a cluster.
 
 ## Related
 

@@ -68,7 +68,7 @@ throwaway PoC. See [Budgets and allowlists](/docs/develop/budgets-and-allowlists
 
 ## The phased path
 
-Each phase is independently shippable. Match your ask to a phase and do only that
+Each phase is independently shippable. Match the task at hand to a phase and do only that
 phase's steps. The agent-egress story is phases 1–3; the ingress step below is the
 **foundational prerequisite** that gets the agent reachable, not stage 0 of the agent
 governance work.
@@ -91,7 +91,7 @@ every hop decided at `/authz`.
 - [Credential-safe action enforcement](/docs/develop/egress-enforcement/) — the developer view of the sidecar + proxy.
 - [Accountable agent identity](/docs/develop/agent-identity/) — decentralized identifier (DID) / VC self-provisioning.
 - [Authority delegation](/docs/develop/delegations-and-approvals/) — human-in-the-loop.
-- [Autonomous flow](/docs/develop/autonomous-flow/) — the end-to-end hero flow.
+- [Autonomous flow](/docs/develop/autonomous-flow/) — the end-to-end governed flow (register → deny → approve → succeed).
 - [Budgets and allowlists](/docs/develop/budgets-and-allowlists/) — registry-level controls.
 - [Connect agents to enterprise authority — hands-on](/docs/develop/enterprise-iam/) — drive the directory → governance → revocation → delegation → token-exchange loop end to end (the agent-idp CLIs + demo scripts).
 

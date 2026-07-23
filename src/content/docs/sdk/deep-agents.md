@@ -50,8 +50,8 @@ On each governed tool the gate asks `pn` (the live control plane, or the offline
 ## The checkpointer requirement (for `interrupt_on`)
 
 Deep Agents human-in-the-loop (HITL) support is the same LangGraph machinery as the [LangGraph adapter](/docs/sdk/langgraph/#the-durable-checkpointer-requirement):
-to `interrupt()` on needs-approval and resume after a human approves, you **must** supply a
-durable **checkpointer** and invoke with a `thread_id`.
+to `interrupt()` on needs-approval and resume after a human approves, a
+durable **checkpointer** **must** be supplied and the agent invoked with a `thread_id`.
 
 :::caution[No checkpointer, no `interrupt_on`]
 `interrupt_on={"read_runbook": True}` cannot pause/resume without a checkpointer + `thread_id`.
@@ -62,10 +62,10 @@ requirement as the scaffold's `checkpointer.py`.
 ## Wire it up
 
 This example is grounded in the shipped
-`examples/deepagents_runbook_governance.py` and the seed personas of **devops-incident**,
-the demo scenario used throughout these docs
-(owner **Ethan Park**, approver **Maya Chen**; negative persona **Claire Evans**); the task
-id `INC-4821` is the docs' sample incident.
+`examples/deepagents_runbook_governance.py` and the seeded personas of **devops-incident**,
+the sample scenario used throughout these docs
+(an owner, an approver, and a negative persona); the task
+id in the examples is a sample incident.
 
 ```python
 from deepagents import create_deep_agent
@@ -140,9 +140,9 @@ Load the markdown directly (for a `StoreBackend`, or to assert it in a test) wit
 ## Offline: prove the contract with no network
 
 The shipped example validates the gate **directly** against the `FakeControlPlane` so it runs
-green whether or not the `deepagents` extra is installed — `Claire Evans` is hard-denied,
-`Ethan Park` is needs-approval until `Maya Chen` approves, and a mid-run **revocation** flips
-Ethan back to denied:
+green whether or not the `deepagents` extra is installed — the negative persona is hard-denied,
+the owner is needs-approval until the approver approves, and a mid-run **revocation** flips
+the owner back to denied:
 
 ```python
 from palonexus import PaloNexus
@@ -164,7 +164,7 @@ with pn.task(subject=NEGATIVE, task_id="INC-4821", scenario="devops-incident", a
 with pn.task(subject=OWNER, task_id="INC-4821", scenario="devops-incident", actor=AGENT) as t:
     assert t.check(action=ACTION, resource=RESOURCE).needs_approval is True
     deleg = t.request_delegation(action=ACTION, resource=RESOURCE, reason="INC-4821", ttl=300)
-    pn._fake.approve_delegation(deleg.id, approver=APPROVER)        # Maya approves
+    pn._fake.approve_delegation(deleg.id, approver=APPROVER)        # the approver approves
     assert t.check(action=ACTION, resource=RESOURCE).allow is True
     pn.revoke(deleg.id, reason="incident closed")
     assert t.check(action=ACTION, resource=RESOURCE).allow is False  # live revocation
