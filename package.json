@@ -10,6 +10,7 @@
 		"dev:root": "astro dev --config astro.config.root.mjs",
 		"build": "astro build",
 		"build:root": "astro build --config astro.config.root.mjs",
+		"build:all": "npm run build:root && npm run build",
 		"preview": "astro build && astro preview",
 		"preview:root": "npm run build:root && astro preview --config astro.config.root.mjs",
 		"astro": "astro",
