@@ -1,16 +1,17 @@
 # PaloNexus Web
 
-Two independent [Astro](https://astro.build) sites, built and deployed separately from
-this one repo:
+One [Astro](https://astro.build) source tree produces the connected PaloNexus web
+experience:
 
 - **Docs** (`/docs`) — the PaloNexus documentation site, built with
   [Starlight](https://starlight.astro.build). See [Docs](#docs-docs) below.
 - **Marketing root** (`/`) — the palonexus.ai homepage, built from markdown content. See
   [Marketing root](#marketing-root-) below.
 
-They ship on separate Cloudflare Workers (`palonexus-docs` / `palonexus-web`), separate
-CI pipelines, and separate Playwright suites — a change to one can never block or break
-the other.
+The current production rollout keeps the two existing Cloudflare Workers (`palonexus-docs`
+and `palonexus-web`) as an intentionally reversible migration step. The unified artifact
+and candidate `palonexus-web-unified` Worker are validated in CI before the production
+route is switched.
 
 ## Docs (`/docs`)
 
@@ -21,10 +22,14 @@ self-hosting, architecture/features, and an HTTP API reference.
 
 ```sh
 npm install
-npm run dev        # http://localhost:4321/docs/
+npm run dev        # unified local Worker: http://localhost:8787/
 npm run build      # static site -> dist/  (+ Pagefind search index)
-npm run preview    # serve the built static site
+npm run preview    # unified local Worker, serving both surfaces
 ```
+
+`npm run dev` and `npm run preview` build and stage both surfaces, then serve `/`, `/docs/`,
+and the request form through the same local Worker. For Starlight-only hot reload while
+editing documentation, use `npm run dev:astro` (that server is mounted at `/docs/`).
 
 The site is **static** (no adapter); `dist/` can be served by any static host.
 
@@ -53,7 +58,7 @@ intentionally refuses and points you to the release guide.
 
 ```
 astro.config.mjs            # base: '/docs', Starlight integration + sidebar (6 sections)
-src/content.config.ts       # Starlight docs collection (unchanged, unrelated to the root site)
+src/content.config.ts       # shared `docs` and `landing` collection schemas
 src/content/docs/
   index.md                  # home (splash)
   getting-started/          # overview, concepts, local quickstart
@@ -86,16 +91,15 @@ Cross-link with root-relative paths under the base, e.g. `/docs/sdk/agentdid/`.
 ## Marketing root (`/`)
 
 The palonexus.ai homepage — a single-page site, plain Astro (no Starlight), content
-authored as markdown in a dedicated `landing` collection instead of hardcoded in a
-component. Lives in its own `src-root/` source directory (a separate Astro `srcDir`,
-not `src/`) so its page routing and content collection are fully isolated from docs —
-sharing `src/pages/` let a root `index.astro` silently override Starlight's own
-homepage route, which is why the two builds don't share a source tree.
+authored as markdown in the shared `landing` collection instead of hardcoded in a
+component. It lives in `src/` alongside the docs collection, with its own marketing
+layout and components. The build staging step mounts the generated Starlight output
+under `/docs` without merging the two visual shells.
 
 ### Local development
 
 ```sh
-npm run dev:root        # http://localhost:4321/
+npm run dev             # http://localhost:8787/
 npm run build:root      # static site -> dist-root/
 npm run preview:root    # serve the built static site
 ```
@@ -122,20 +126,28 @@ no laptop deploy path — `npm run deploy:root` intentionally refuses.
 ### Structure
 
 ```
-astro.config.root.mjs           # base: '/' (default), srcDir: 'src-root', outDir 'dist-root'
-src-root/content.config.ts      # `landing` collection (discriminated union, one schema per section)
-src-root/content/landing/       # nav, hero, solutions, why-now, platform, use-cases, governance, closing
-src-root/components/landing/    # one presentational component per section
-src-root/pages/index.astro      # assembles the sections in order, wrapped in Layout.astro
-src-root/layouts/Layout.astro   # document metadata, imports landing.css
-src-root/styles/landing.css     # page CSS
+astro.config.root.mjs           # rollback build config for the legacy root Worker
+src/content.config.ts           # shared `landing` and `docs` collection schemas
+src/content/landing/             # nav, hero, solutions, why-now, platform, use-cases, governance, closing
+src/components/landing/          # one presentational component per section
+src/pages/index.astro            # assembles the sections in order, wrapped in MarketingLayout
+src/layouts/MarketingLayout.astro
+src/styles/landing.css
 tests/e2e-root/root.spec.ts     # Playwright suite (separate testDir from docs' tests/e2e)
 ```
 
 ### Edit content
 
-Edit the relevant file in `src-root/content/landing/*.md`. Frontmatter shape is
-validated per section by the schema in `src-root/content.config.ts` — a build fails
+Edit the relevant file in `src/content/landing/*.md`. Frontmatter shape is
+validated per section by the schema in `src/content.config.ts` — a build fails
 loudly if a required field is missing or misspelled. `why-now.md` and `governance.md`
 also have a markdown body (their one prose paragraph); every other section is pure
 frontmatter.
+
+### Unified deployment candidate
+
+`npm run stage:unified` creates and verifies `dist-unified/`, and
+`wrangler.unified.jsonc` points a single Worker at that artifact while preserving the
+request-form email binding. Production continues using the two legacy workers until a
+reviewed route cutover; this gives us an immediate rollback by restoring the existing
+Worker routes.

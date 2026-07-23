@@ -1,8 +1,17 @@
 ---
 section: governance
-eyebrow: Trust and governance
-heading: Approvals are table stakes. Verified authority is the difference.
+eyebrow: Human approval across the surfaces
+heading: Approval is a workflow, not a fourth product.
 items:
+  - >-
+    Integrate: an agent raises a narrow request through the SDK with its identity, owner,
+    task, action, resource, and requested duration.
+  - >-
+    Enforce: the Control Plane validates authority, holds the action, and applies an
+    allow, deny, or approval-required decision fail closed.
+  - >-
+    Observe: the current self-hosted portal shows approval queues, history, posture, and
+    audit context. Email-to-web approval is planned for Cloud Beta.
   - >-
     Approver-authority verification: PaloNexus verifies whether that human is authorized
     to approve this action for this resource — an approval click from the wrong person
@@ -20,6 +29,5 @@ items:
     credential issued.
 ---
 
-Every agent runtime now ships an approval checkbox. PaloNexus answers the question those
-checkboxes skip — was this person entitled to grant this authority? — so security teams
-can say yes to agents without handing out standing access.
+PaloNexus answers the question approval checkboxes skip — was this person entitled to grant
+this authority? — so security teams can say yes to agents without handing out standing access.
