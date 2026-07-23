@@ -17,20 +17,20 @@ target, opens a **time-boxed delegation request**, a human **approves** it (mint
 short-lived Delegation Verifiable Credential (VC)), the retried call is **allowed** for exactly that task,
 and on TTL expiry or revocation deny-by-default reasserts. The
 [temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/)
-runs this end-to-end offline on the Northstar Corp demo personas — Ethan Park is the
-human the agent acts for, Maya Chen the approver; here is the shape of it:
+runs this end-to-end offline on the sample organization's seeded roles — the owner is
+the human the agent acts for, the sponsor the approver; here is the shape of it:
 
 ```mermaid
 sequenceDiagram
-    participant Agent as Agent (for Ethan)
+    participant Agent as Agent (for the owner)
     participant CP as Control plane /authz
     participant IdP as agent-idp
-    participant Maya as Approver (Maya Chen)
+    participant Approver as Approver (sponsor)
     Agent->>CP: check(runbooks:read, db-failover)
     CP-->>Agent: 401 needs-approval — no approved delegation
     Agent->>IdP: request_delegation(ttl=300)
     IdP-->>Agent: Delegation(status=pending)
-    Maya->>IdP: Approve in /approvals console
+    Approver->>IdP: Approve in /approvals console
     Note over IdP: mint Delegation VC — status=approved, notAfter
     Agent->>CP: authorize(runbooks:read, db-failover)
     CP-->>Agent: 200 allow — subject=ethan.park
@@ -40,7 +40,7 @@ sequenceDiagram
 ```
 
 *Sequence: the deny → request → approve → allow → expire/revoke arc. Every hop is a
-real `/authz` decision carrying `subject=ethan.park`; the approval is a named human
+real `/authz` decision carrying the on-behalf-of subject; the approval is a named human
 decision on the audit record, not a standing grant.*
 
 A delegation moves through a small, explicit lifecycle. Only the `approved` state
@@ -68,19 +68,19 @@ leaves for `expired` (TTL) or `revoked` (live StatusList), both terminal denies.
 Separation of duties is enforced by the **two-gate approval rule**
 (`authority.py::decide`): an approver must hold `org:agents:approve` **and**
 `covers_scenario` (at least one of the scenario's resource scopes). The owner who
-requested the elevation does **not** self-approve. The cast below is the Northstar
-`devops-incident` demo scenario's — the
+requested the elevation does **not** self-approve. The cast below is the seeded
+`devops-incident` scenario's — the
 [temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/)
-defines each persona.
+defines each role.
 
-| Responsibility | Persona (devops-incident) | Authority required | Notes |
+| Responsibility | Role (devops-incident) | Authority required | Notes |
 |---|---|---|---|
-| **Request** elevation | Ethan Park (owner / on-behalf-of) | the agent acts on Ethan's behalf; he holds `deployments:*` but **not** `runbooks:read` | the agent never holds more than the human it represents |
-| **Approve** | Maya Chen (sponsor) | `org:agents:approve` **and** covers DevOps (`runbooks:read`) | passes both gates ✅ — and is not the requester |
-| **Cannot approve** | Omar Haddad (auditor) | holds `org:agents:approve` but covers **Security** only | `outside_scenario_domain:devops-incident` ❌ — can only audit |
-| **Cannot approve** | Claire Evans (negative) | no scopes; invariant-blocked from `org:agents:*` | hard-denied everywhere ❌ |
-| **Operate** the task | Arjun Mehta (operator) | runs the agent within granted scopes | no approval authority |
-| **Audit** | Omar Haddad (auditor) | read the hash-chained `/audit` log | reviews who approved what, when |
+| **Request** elevation | Owner (on-behalf-of) | the agent acts on the owner's behalf; the owner holds `deployments:*` but **not** `runbooks:read` | the agent never holds more than the human it represents |
+| **Approve** | Sponsor | `org:agents:approve` **and** covers DevOps (`runbooks:read`) | passes both gates ✅ — and is not the requester |
+| **Cannot approve** | Auditor | holds `org:agents:approve` but covers **Security** only | `outside_scenario_domain:devops-incident` ❌ — can only audit |
+| **Cannot approve** | Negative persona | no scopes; invariant-blocked from `org:agents:*` | hard-denied everywhere ❌ |
+| **Operate** the task | Operator | runs the agent within granted scopes | no approval authority |
+| **Audit** | Auditor | read the hash-chained `/audit` log | reviews who approved what, when |
 
 ## Time-boxed Delegation VCs
 
@@ -148,7 +148,7 @@ against its decentralized identifier (DID),
 proving it is the *live holder* in the *expected execution state* (this ticket,
 this scope), defeating stolen or replayed credentials. The SDK's `runbook_tool.py`
 does the two-step `agentdid` flow once a Delegation VC is available, attaching the
-exec-state context (`incy` is the demo incident manager the ticket ids come from):
+exec-state context (`incy` is the sample incident manager the ticket ids come from):
 
 <!-- no-doctest: illustrative fragment — uses `RunbookContext` from a neighbouring block (not standalone-runnable) -->
 ```python
@@ -174,8 +174,8 @@ React-Query invalidation):
 *The `/approvals` console — the human-in-the-loop queue where an operator approves or
 denies delegation requests. Shown here in its empty state: the queue is clear (no
 pending requests), the resting state between elevations. Set the **Approver** field
-(e.g. `maya.chen@northstar.example`) before approving; that string lands on the
-delegation and the audit record.*
+(e.g. the seeded approver identity `maya.chen@northstar.example`) before approving;
+that string lands on the delegation and the audit record.*
 
 | Console | Backs | Approves | When it fires |
 |---|---|---|---|
@@ -193,9 +193,9 @@ curl -s -XPOST localhost:8181/v1/egress/requests/$ID/approve -d '{"approver":"sr
 curl -s -XPOST localhost:8181/v1/egress/requests/$ID/deny     -d '{"approver":"sre@corp","reason":"…"}'
 ```
 
-## Preview a decision before you run it
+## Preview a decision before running it
 
-Before requesting (or approving) an elevation, you can dry-run the exact decision in
+Before requesting (or approving) an elevation, dry-run the exact decision in
 the **Policy simulator** (`/simulate`). Its **Authority-preview** tab answers a
 design-time eligibility question — *would persona P, on scenario S, be allowed
 authority action A?* — while the **Live decision** tab issues a runtime-faithful
@@ -232,7 +232,7 @@ approval, is the [autonomous flow](/docs/develop/autonomous-flow/).
 
 ## See also
 
-- [Temporary elevation walkthrough (INC-4821)](/docs/develop/guides/temporary-elevation-walkthrough/) — this exact flow, end-to-end and runnable offline, with the SDK error table and the elevation flow table.
+- [Temporary elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/) — this exact flow, end-to-end and runnable offline, with the SDK error table and the elevation flow table.
 - [Accountable agent identity](/docs/develop/agent-identity/) — how the agent the delegation is issued to gets its `did:key` + Membership VC.
 - [Recipe: revocation race](/docs/develop/recipes/revocation-race/) — revoke mid-task and watch the next check deny.
 - [Troubleshooting § SDK typed error tree](/docs/develop/troubleshooting/#the-sdk-typed-error-tree) — map `ApprovalRequired` / `DelegationExpired` / `CredentialRevoked` to their fixes.

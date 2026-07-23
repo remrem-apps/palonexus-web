@@ -7,7 +7,7 @@ sidebar:
 
 :::caution[Status: planned integration — design preview]
 This integration is **not built yet**. Nothing on this page is installable today; it
-describes intended behavior so you can evaluate the fit. There is no shipped OpenAI Agents
+describes intended behavior so the fit can be evaluated. There is no shipped OpenAI Agents
 SDK hook or adapter. The equivalent working pattern for LangChain-family frameworks is the
 shipped [Deep Agents / LangChain adapters](/docs/integrations/deep-agents-sandboxes/).
 :::
@@ -51,7 +51,7 @@ harness's own approvals remain useful as orchestration; PaloNexus would add what
 not designed to establish:
 
 - **Accountable identity** — every agent bound to an active human owner and sponsor.
-- **Organization-derived authority** — permissions traced from your workforce directory,
+- **Organization-derived authority** — permissions traced from the workforce directory,
   roles, and resource ownership, not application config.
 - **Approval entitlement checking** — verifying the approver has authority over the
   affected resource, may delegate it, and is still active in that role.
@@ -62,9 +62,9 @@ not designed to establish:
 - **Cross-system audit lineage** — one authority trail spanning every system the agent
   touched, not per-run tracing alone.
 
-## What you can use today
+## What is available today
 
-If you build on LangChain, LangGraph, or Deep Agents, the same pattern is shipped now as
+For builds on LangChain, LangGraph, or Deep Agents, the same pattern is shipped now as
 SDK adapters — see
 [Keep secrets outside Deep Agents sandboxes](/docs/integrations/deep-agents-sandboxes/).
 Framework-agnostic network-layer enforcement for agents deployed on Kubernetes is also

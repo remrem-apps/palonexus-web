@@ -1,6 +1,6 @@
 ---
 title: Self-Hosting (Kustomize)
-description: Deploy the whole PaloNexus control layer with one kubectl apply — prerequisites, the dev/kind/selfhost overlays, the opt-in hardening components and how they compose, and the secrets you provide out-of-band.
+description: Deploy the whole PaloNexus control layer with one kubectl apply — prerequisites, the dev/kind/selfhost overlays, the opt-in hardening components and how they compose, and the secrets provided out-of-band.
 sidebar:
   order: 3
 ---
@@ -26,9 +26,9 @@ helm install eg oci://docker.io/envoyproxy/gateway-helm --version v1.1.0 \
   -n envoy-gateway-system --create-namespace
 ```
 
-You also need `kubectl` + `kustomize` (or `kubectl kustomize`), Docker/Podman, and
-a cluster (kind/minikube/k3d locally, or DOKS). If you enable the `postgres`
-component, install the [CloudNativePG](https://cloudnative-pg.io) (CNPG) operator first
+Also required: `kubectl` + `kustomize` (or `kubectl kustomize`), Docker/Podman, and
+a cluster (kind/minikube/k3d locally, or DOKS). If the `postgres` component is
+enabled, install the [CloudNativePG](https://cloudnative-pg.io) (CNPG) operator first
 (see [Persistence](/docs/operations/persistence/)).
 
 ## Render with `LoadRestrictionsNone`
@@ -74,25 +74,25 @@ deploy/kustomize/
 |---|---|---|
 | `dev` | local cluster (kind/minikube/k3d) | pins the locally-built `palonexus/control-plane:dev`; **strips the three `OIDC_*` env vars** → anonymous passthrough (policy still enforces public-vs-private) |
 | `kind` | single-node kind / live demo | dev behaviour + numeric UIDs for restricted Pod Security Standards (PSS), `replicas: 1`, adds the `echo` demo backend. Note kind's default CNI (kindnet) does **not** enforce NetworkPolicy — the egress lockdown is advisory there; the `/authz` gate still enforces |
-| `selfhost` | your cluster (DOKS/EKS/GKE/on-prem) | cluster-agnostic; defaults images to `ghcr.io/palonexus/*:dev`; anonymous-passthrough egress; the place you turn on the hardening **components** |
+| `selfhost` | the target cluster (DOKS/EKS/GKE/on-prem) | cluster-agnostic; defaults images to `ghcr.io/palonexus/*:dev`; anonymous-passthrough egress; where the hardening **components** are turned on |
 
 The dev/kind/selfhost overlays all strip the same three env entries (`OIDC_ISSUER`,
 `OIDC_JWKS_URL`, `OIDC_AUDIENCE`) to enter anonymous passthrough. Same image
 everywhere — only the overlay differs.
 
-:::note[Wire your own IdP for production]
+:::note[Wire the workforce IdP for production]
 Anonymous passthrough is fine for evaluation, but production should verify human
-identity against your workforce identity provider (IdP). Enable the `oidc` component (below) to point the
-control plane at **your** issuer — **Logto** (the first supported IdP), Okta, Entra ID, or
-any OpenID Connect (OIDC) provider. Agent *egress* identity (Decentralized Identifier /
+identity against the organization's workforce identity provider (IdP). Enable the `oidc` component (below) to point the
+control plane at that issuer — **Logto** (the supported IdP); Okta, Entra ID, or
+any OpenID Connect (OIDC) provider wires through the same seam. Agent *egress* identity (Decentralized Identifier /
 Verifiable Credential, DID/VC) is independent and already on. Full
 steps: [Bring your own IdP](/docs/operations/bring-your-own-idp/).
 :::
 
 ## The opt-in hardening components
 
-Production hardenings ship as Kustomize **components** you list in the selfhost
-overlay's `components:` block. They compose; enable as many as you want:
+Production hardenings ship as Kustomize **components** listed in the selfhost
+overlay's `components:` block. They compose; enable as many as needed:
 
 ```yaml
 # deploy/kustomize/overlays/selfhost/kustomization.yaml
@@ -103,7 +103,7 @@ components:
   - ../../components/egress-sidecar      # per-agent localhost sidecar (langchain model-egress fix), fresh 12h revocable VP
   - ../../components/egress-gateway      # OPTIONAL Envoy egress data plane (ext_authz -> /authz)
   - ../../components/agent-admission     # webhook: inject proxy env + reject un-provisioned agent pods
-  - ../../components/oidc                # wire YOUR IdP (Logto/Okta/Entra); DELETE the OIDC-strip patch when enabled
+  - ../../components/oidc                # wire the workforce IdP (Logto/Okta/Entra); DELETE the OIDC-strip patch when enabled
 ```
 
 | Component | What it does |
@@ -114,7 +114,7 @@ components:
 | `egress-sidecar` | adds a localhost `egress-sidecar` to each agent pod so `langchain_openai`'s `base_url` (which it can't strip) routes through the proxy; mints a fresh long-TTL (12h) revocable VP per request. **Pair with `egress-enforcement`** |
 | `egress-gateway` | optional transparent Envoy forward-proxy (`egress-gw.apps.svc:3128`) deciding every call via Envoy's external-authorization (`ext_authz`) filter — the egress mirror of the ingress keystone |
 | `agent-admission` | mutating + validating webhook: injects the proxy env at admission and **rejects** agent pods whose agent isn't registered+provisioned at the IdP. Self-contained TLS-bootstrap Job (no cert-manager) |
-| `oidc` | wires your enterprise IdP (Logto first-supported / Okta / Entra / any OIDC) as human sign-in — re-adds `OIDC_ISSUER`/`OIDC_JWKS_URL`/`OIDC_AUDIENCE` pointing at your issuer. **Enabling it requires deleting the anonymous-passthrough strip patch** (they conflict). → [Bring your own IdP](/docs/operations/bring-your-own-idp/) |
+| `oidc` | wires the enterprise IdP (Logto — the supported IdP; Okta / Entra / any OIDC via the same seam) as human sign-in — re-adds `OIDC_ISSUER`/`OIDC_JWKS_URL`/`OIDC_AUDIENCE` pointing at the configured issuer. **Enabling it requires deleting the anonymous-passthrough strip patch** (they conflict). → [Bring your own IdP](/docs/operations/bring-your-own-idp/) |
 
 ### Order matters
 
@@ -158,7 +158,7 @@ make test          # policy matrix + audit hash-chain (no cluster)
 make smoke         # boots the binary, exercises allow(200)/deny(403)
 
 make image                                            # palonexus/control-plane:dev
-kind load docker-image palonexus/control-plane:dev    # or push to your registry
+kind load docker-image palonexus/control-plane:dev    # or push to a registry
 make deploy                                           # kubectl apply -k overlays/dev
 make render                                            # print full manifest set (no apply)
 ```
@@ -178,7 +178,7 @@ job. Symptom → cause → fix:
 | Allowed model call returns no completion though deploy is green | `model-broker-secrets` (`OPENAI_API_KEY`) absent — **fail-closed by design** | Apply the model-broker Secret; deploy intentionally succeeds without it |
 | VCs stop verifying after an agent-idp restart | no stable `ISSUER_PRIVATE_KEY_B64` → ephemeral dev key regenerated | Provide the `agent-idp-secrets` issuer Secret (see [Secrets](/docs/operations/secrets/)) |
 | `kubectl get gateway` ADDRESS blank / Service stuck `<pending>` | LoadBalancer still provisioning on DO (can take minutes) | Wait, or `kubectl port-forward` to stay moving; confirm `PROGRAMMED=True` |
-| Portal `/settings/seed` → `ENOENT` on `python3` (only when using the optional Logto demo seed) | plain `node:*` portal image without the bundled `seed-logto` + Python | Use the bundled portal image, or seed from the CLI ([DOKS runbook Step 4](/docs/operations/doks-runbook/#step-4--seed-the-demo-identity-model)) — or skip the demo seed entirely and bring your own OIDC/SCIM IdP ([IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model)) |
+| Portal `/settings/seed` → `ENOENT` on `python3` (only when using the optional sample seed) | plain `node:*` portal image without the bundled `seed-logto` + Python | Use the bundled portal image, or seed from the CLI ([DOKS runbook Step 4](/docs/operations/doks-runbook/#step-4--seed-the-demo-identity-model)) — or skip the sample seed entirely and wire the workforce OIDC/SCIM IdP ([IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model)) |
 | Egress lockdown not enforced on `kind` | kindnet CNI doesn't enforce NetworkPolicy (advisory only) | Expected on kind; the `/authz` gate still enforces. Use a NetworkPolicy-enforcing CNI (DOKS = Cilium) in production |
 
 ## DOKS / any cluster

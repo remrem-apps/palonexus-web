@@ -1,6 +1,6 @@
 ---
 title: Secrets
-description: How PaloNexus handles every secret — the demo seeder's Logto M2M credentials (optional, reference demo), the agent-idp issuer key, agent workload tokens, the model-broker provider key, and SDK API keys — with the never-in-image rule and External Secrets / sealed-secrets patterns.
+description: How PaloNexus handles every secret — the optional sample-data seeder's Logto M2M credentials, the agent-idp issuer key, agent workload tokens, the model-broker provider key, and SDK API keys — with the never-in-image rule and External Secrets / sealed-secrets patterns.
 sidebar:
   order: 8
 ---
@@ -21,17 +21,17 @@ Kubernetes `Secret`s, ideally synced from an external manager.
 |---|---|---|---|
 | `OPENAI_API_KEY` (`model-broker-secrets`) | `palonexus` ns | model-broker only | The real provider key — **the only place it exists**. No agent pod ever holds it; agents call the broker, the broker calls the provider. |
 | Issuer key `ISSUER_PRIVATE_KEY_B64` | `agent-idp` ns | agent-idp | The `did:web` issuer Ed25519 private key. Signs Membership/Delegation Verifiable Credentials (VCs) **and** Security Token Service (STS) tokens. **Must be stable across restarts** or every previously-issued VC fails to verify. Unset → agent-idp generates an ephemeral dev key and warns. |
-| Logto M2M `LOGTO_M2M_APP_ID` / `_SECRET` | seeder env / `seed-logto` | `seed-logto`, portal seed surface | **Reference demo (Logto) — optional.** Machine-to-machine credentials for the Logto Management API, used **only** by the optional demo seeder; PaloNexus itself does not require Logto. Scope to the Management API resource only. Any workforce identity provider (IdP) speaking OpenID Connect (OIDC) / SCIM (System for Cross-domain Identity Management) integrates via the standard patterns — see [IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model). |
+| Logto M2M `LOGTO_M2M_APP_ID` / `_SECRET` | seeder env / `seed-logto` | `seed-logto`, portal seed surface | **Optional — sample-data seeding.** Machine-to-machine credentials for the Logto Management API, used **only** by the optional sample-data seeder; the platform runtime does not require them. Scope to the Management API resource only. Logto is the supported workforce identity provider (IdP); any standard OpenID Connect (OIDC) / SCIM (System for Cross-domain Identity Management) provider fits the same seam — see [IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model). |
 | Agent workload tokens (`PALONEXUS_AGENT_TOKEN`) | per-agent | the agent + SDK | The agent's own bearer for live egress decisions. Short-lived; prefer the agent STS / SPIFFE over a long-lived static token. |
 | Agent identity material (`did:key` priv + Membership VC) | per-pod `emptyDir` | agent + egress-sidecar | Written by the agent at bootstrap, read by the sidecar. Never leaves the pod; rotated by re-provisioning. |
 | SDK API keys (`PALONEXUS_API_KEY`, `pn_live_…`/`pn_test_…`) | developer / CI | the SDK facade | Scope and rotate per environment; `pn_test_…` for sandbox, `pn_live_…` for prod. |
-| Registry / store DSNs (`REGISTRY_DB_URL`, `IDP_DB_URL`) | control-plane / agent-idp | persistence layer | Contain DB passwords. With the `postgres` component, CloudNativePG generates the `*-app` secret and the component wires the data source name (DSN) in — you never write the password by hand. |
+| Registry / store DSNs (`REGISTRY_DB_URL`, `IDP_DB_URL`) | control-plane / agent-idp | persistence layer | Contain DB passwords. With the `postgres` component, CloudNativePG generates the `*-app` secret and the component wires the data source name (DSN) in — the password is never written by hand. |
 | `portal-ts-auth` (`TS_AUTHKEY`) | `palonexus` ns | portal | Optional Tailscale auth key for tailnet ingress. Deploy succeeds without it (use port-forward). |
 
 ## Cluster secret / env fail-closed matrix
 
 The catalog above is the *what*; this matrix is the **operational** view used by
-your cluster rollout — every cluster Secret/env, its namespace, the consumer, what it
+a cluster rollout — every cluster Secret/env, its namespace, the consumer, what it
 unlocks, and the **fail-closed default** when it's absent. Grounded against the
 live `palonexus-doks` reference rollout (`ops-portal-deploy-note.md`). The guiding rule:
 absence never crash-loops the platform — it degrades to the *safe* (closed) state.
@@ -43,16 +43,16 @@ absence never crash-loops the platform — it degrades to the *safe* (closed) st
 | `agent-idp-keys` → `IDP_KEY_HASH_SALT` | `agent-idp` | agent-idp `/v1/keys` | salted hashing of SDK API keys at rest | key store unusable / unsalted; mint+verify fails closed |
 | `simulate-operator` → `SIMULATE_OPERATOR_TOKEN` | `palonexus` (control-plane **and** portal backend-for-frontend, BFF, same value) | control-plane dry-run gate + portal `/simulate` | the `/authz` **dry-run** ("Live decision" simulator); per-request `X-Palonexus-Simulate-Operator` must match | **empty = dry-run disabled entirely** |
 | `logto-m2m` → 5× `LOGTO_*` ᴰ | `palonexus` via `components/portal-seed-logto` (`optional: true`) | portal `/settings/logto` + `/settings/seed` | seed-from-UI against a live tenant; form becomes read-only / Ops-managed | falls back to `0600` file / offline mode; never crash-loops |
-| `SEED_LOGTO_DIR` = `/opt/seed-logto` ᴰ | portal image **and** agent-idp | portal seed spawn + agent-idp `authority_preview` | locate `seed_logto.py` / `nsr_seeder` + Northstar (demo-org) manifests | agent-idp `/v1/authority/preview` → **503 `authority_engine_unavailable`** |
+| `SEED_LOGTO_DIR` = `/opt/seed-logto` ᴰ | portal image **and** agent-idp | portal seed spawn + agent-idp `authority_preview` | locate `seed_logto.py` / `nsr_seeder` + sample-org manifests | agent-idp `/v1/authority/preview` → **503 `authority_engine_unavailable`** |
 | `SEED_LOGTO_PYTHON` = `/opt/seedvenv/bin/python3` ᴰ | portal image | portal seed spawn | the venv interpreter for `child_process.spawn` | spawn falls back to `python3` on PATH (`ENOENT` on a plain `node:*` image) |
 | `ALLOW_LOGTO_SEED` = `true` ᴰ | portal (`palonexus`) | portal seed route | the apply/reseed/cleanup mutations | seed mutations disabled (plan/preview only) |
 | `agent-db` → `uri` | `apps` (per-agent, `optional: true`) | agent pods | durable LangGraph checkpointer (human-in-the-loop, HITL, survives restart) | `MemorySaver` (in-process HITL only) |
 
-ᴰ **Reference demo (Logto) — optional.** Rows marked ᴰ (`logto-m2m`,
-`SEED_LOGTO_DIR`, `SEED_LOGTO_PYTHON`, `ALLOW_LOGTO_SEED`) are **demo-seed** secrets
-for the **optional** Logto reference seed — they load the Northstar **demo** identity
-model and are not required for PaloNexus to run. A "bring-your-own IdP" deployment
-connects its own OIDC/SCIM workforce IdP instead — see
+ᴰ **Optional — sample-data seeding.** Rows marked ᴰ (`logto-m2m`,
+`SEED_LOGTO_DIR`, `SEED_LOGTO_PYTHON`, `ALLOW_LOGTO_SEED`) are secrets for the
+**optional** seed tooling — they load the sample identity model into a Logto
+tenant for evaluation and testing and are not required for PaloNexus to run. A
+production deployment connects the organization's workforce IdP instead — see
 [IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model).
 
 :::note[Issuer Secret name]
@@ -73,7 +73,7 @@ cp deploy/kustomize/base/model-broker/secret.example.yaml \
    deploy/kustomize/base/model-broker/secret.yaml          # edit OPENAI_API_KEY (gitignored)
 kubectl apply -f deploy/kustomize/base/model-broker/secret.yaml
 
-# Stable issuer key (generate once, store in your secret manager):
+# Stable issuer key (generate once, store in the secret manager):
 kubectl -n agent-idp create secret generic agent-idp-issuer \
   --from-literal=ISSUER_PRIVATE_KEY_B64="$(your-keygen)"
 ```

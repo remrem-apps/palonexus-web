@@ -11,8 +11,8 @@ the strict setting. This is the checklist — every item links to the exact env 
 component that turns it on, and to the invariant in the [security model](/docs/concepts/security-model/)
 it enforces.
 
-Hardenings ship as composable Kustomize **components** you list in the selfhost overlay; enable as
-many as you want:
+Hardenings ship as composable Kustomize **components** listed in the selfhost overlay; enable as
+many as needed:
 
 ```yaml
 # deploy/kustomize/overlays/selfhost/kustomization.yaml
@@ -27,7 +27,7 @@ components:
 
 ## The checklist
 
-Tick each box as you flip it from the dev/demo default to the strict setting. The
+Tick each box as it flips from the dev/demo default to the strict setting. The
 **Owner** column is the responsibility split (Ops = cluster/secrets/rollout,
 Dev = policy/identity wiring) per the platform's working model.
 
@@ -42,7 +42,7 @@ Dev = policy/identity wiring) per the platform's working model.
 | ☐ | 7 | **Durable, shared state** | Ops | Component `postgres` (+ the CloudNativePG, CNPG, operator): `REGISTRY_BACKEND=postgres` / `IDP_STORE_BACKEND=postgres`. In-memory is per-replica and lost on restart — and revocation must survive. | revocation/registrations survive restarts |
 | ☐ | 8 | **Audit retention** | Ops | Ship the hash-chained audit to durable storage with a retention window (Loki retention / object-storage lifecycle). | tamper-evident audit, kept |
 | ☐ | 9 | **Backups + restore drill** | Ops + QA | Schedule CNPG backups; run the [restore drill](/docs/operations/backups/) so `verify_chain()` passes on restored data. | provable recovery |
-| ☐ | 10 | **mTLS on the data path** | Ops | Run the decision/egress path mesh-only (the two-listener split lets you lock `:9191` to mesh and expose `:8181` separately); add mutual TLS (mTLS) via your mesh (Envoy/Istio/Linkerd). | edge-trust, no token re-parsing |
+| ☐ | 10 | **mTLS on the data path** | Ops | Run the decision/egress path mesh-only (the two-listener split allows locking `:9191` to mesh and exposing `:8181` separately); add mutual TLS (mTLS) via the mesh (Envoy/Istio/Linkerd). | edge-trust, no token re-parsing |
 | ☐ | 11 | **Rate limits** | Ops + Dev | Apply per-agent **budgets** (`callsPerHour`/`tokensPerHour` on the registry entry) and gateway-level rate limits via Envoy `SecurityPolicy`. | contain runaway loops ([budget recipe](/docs/develop/recipes/budget-exhaustion/)) |
 | ☐ | 12 | **Restricted PSS + numeric UIDs** | Ops | Run under the restricted Pod Security Standard (the `kind` overlay's numeric-UID pattern); non-root, read-only rootfs where possible. | least-privilege workloads |
 | ☐ | 13 | **Secrets out-of-band** | Ops | No secret in an image; deliver via External Secrets / sealed-secrets; keep the **issuer key stable**. | [Secrets](/docs/operations/secrets/) |
@@ -61,8 +61,8 @@ kubectl kustomize --load-restrictor LoadRestrictionsNone deploy/kustomize/overla
 #   expect 407 X-Palonexus-Deny-Reason: agent identity required
 ```
 
-Cross-check each deny against the [troubleshooting catalog](/docs/develop/troubleshooting/) — in a
-hardened cluster you should be able to *produce* `verified agent credential required`,
+Cross-check each deny against the [troubleshooting catalog](/docs/develop/troubleshooting/) — a
+hardened cluster should be able to *produce* `verified agent credential required`,
 `agent identity required`, and `opa unavailable` on demand, proving each gate is live.
 
 :::note[kind caveat]

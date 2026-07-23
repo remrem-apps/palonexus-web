@@ -17,8 +17,8 @@ middleware, the egress-proxy helpers, and the sidecar.
 ## The SDK facade — `PaloNexus.from_env()`
 
 Separately from the agent-pod settings below, the `palonexus` SDK **facade** reads its own
-small set of `PALONEXUS_*` variables in `PaloNexus.from_env()` (`client.py`). These are what
-you set when embedding the SDK in your own code or CI. Every value falls back to the local-dev
+small set of `PALONEXUS_*` variables in `PaloNexus.from_env()` (`client.py`). These are the
+values to set when embedding the SDK in application code or CI. Every value falls back to the local-dev
 topology in `platform/CLAUDE.md`, and **`PALONEXUS_OFFLINE` is the master switch**: when truthy
 (`1` / `true` / `yes`) `from_env()` returns `PaloNexus.offline()` and *every other variable
 below is ignored* — the facade routes through the in-memory `FakeControlPlane`, so the same code
@@ -31,14 +31,14 @@ path runs in CI with no cluster, no keys, and no network.
 | `PALONEXUS_MGMT_URL` | `http://localhost:8181` | **used** | ignored | Control-plane management API (`:8181`) — registry + `/v1/audit` (used by `pn.audit`). |
 | `PALONEXUS_IDP_URL` | `http://localhost:8090` | **used** | ignored | agent-idp base URL (`:8090`) — register, provision, delegations, revocation, directory. |
 | `PALONEXUS_API_KEY` | unset (`None`) | **used** | ignored | The SDK API key (`pn_live_…` / `pn_test_…`), sent as a `Bearer` on idp + management calls. |
-| `PALONEXUS_TENANT_ID` | `""` | **used** | `"offline"` | Default org/tenant id for governance calls (e.g. `7gdgqfu5j0oo`, the org id of Northstar Corp, the fictional demo organization). |
+| `PALONEXUS_TENANT_ID` | `""` | **used** | `"offline"` | Default org/tenant id for governance calls (e.g. `7gdgqfu5j0oo`, the seeded sample organization's org id). |
 | `PALONEXUS_AGENT_TOKEN` | `""` | **used** | ignored | Workload token presented as `Authorization` on egress `/authz` calls; absent → anonymous, and private targets deny. |
 
 ### SDK API keys (`pn_live_` / `pn_test_`)
 
-The `PALONEXUS_API_KEY` your client presents is created, scoped, rotated, and revoked from the
+The `PALONEXUS_API_KEY` the client presents is created, scoped, rotated, and revoked from the
 operator portal's **SDK API keys** console (`/settings/keys`). Keys are **deny-by-default**: a
-new key carries only the scopes you toggle on, are **hashed at rest**, and **fail closed the
+new key carries only the scopes toggled on, are **hashed at rest**, and **fail closed the
 moment they are revoked** — the next call the SDK makes with a revoked key is rejected. Use a
 `pn_test_` key against a sandbox tenant and a `pn_live_` key in production.
 

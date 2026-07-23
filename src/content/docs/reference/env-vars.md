@@ -5,10 +5,10 @@ sidebar:
   order: 5
 ---
 
-Come here when you're configuring or deploying a PaloNexus component and need to know what
+This page is the configuration reference for every PaloNexus component: what
 each knob does and its default. Every component — control plane, agent-idp, model broker,
-agents, and the SDK — is configured **entirely by environment variables**, and if you just
-want the smallest set that works, jump to [Minimum viable env, per deployment
+agents, and the SDK — is configured **entirely by environment variables**. For
+the smallest set that works, jump to [Minimum viable env, per deployment
 mode](#minimum-viable-env-per-deployment-mode).
 
 Because config is all env, the same image runs in dev and prod, and only the Kustomize
@@ -147,7 +147,7 @@ facade**, which defaults to `localhost` for local dev):
 | `PALONEXUS_MGMT_URL` | `http://localhost:8181` | the management plane (registry, audit) the SDK reads |
 | `PALONEXUS_IDP_URL` | `http://localhost:8090` | agent-idp base URL (register, provision, delegations, revocation) |
 | `PALONEXUS_API_KEY` | *(unset)* | SDK API key (`pn_live_…` / `pn_test_…`); sent as the bearer for SDK calls |
-| `PALONEXUS_TENANT_ID` | `""` | tenant/org id (e.g. `7gdgqfu5j0oo` for Northstar Corp, the fictional demo org) |
+| `PALONEXUS_TENANT_ID` | `""` | tenant/org id (e.g. `7gdgqfu5j0oo` for the sample organization) |
 | `PALONEXUS_AGENT_TOKEN` | `""` | the agent workload token for live egress decisions |
 | `PALONEXUS_OFFLINE` | `""` | when truthy (`1`/`true`/`yes`), `from_env()` returns an in-memory `PaloNexus.offline()` — no cluster, no network |
 
@@ -157,19 +157,17 @@ pn = PaloNexus.from_env()          # reads the table above
 pn = PaloNexus.offline()           # or force offline regardless of env
 ```
 
-## Reference demo seeder — Logto (`LOGTO_*`)
+## Identity seeder — Logto (`LOGTO_*`)
 
-:::note[Reference demo (Logto) — optional]
-These variables configure the **demo seeder** that loads the Northstar **demo**
-identity model into a **Logto** reference tenant. They are **only needed to run the
-demo seed** — PaloNexus itself does not require Logto. Any OIDC/SCIM (System for
-Cross-domain Identity Management) workforce identity provider (IdP)
-(Okta, Microsoft Entra ID, Auth0, Ping, Google Workspace, Amazon Cognito, Keycloak,
-Logto, …) integrates via the standard patterns — see
-[IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model).
+:::note[Sample data only]
+These variables configure the **identity seeder** that loads the sample
+identity model into a sandbox **Logto** tenant. They are **only needed to run the
+seed** — the platform runtime does not read them. See
+[IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model) for how the
+Logto workforce identity provider (IdP) integrates.
 :::
 
-The `seed-logto` tool seeds the Northstar demo org (workforce identity) into a Logto tenant.
+The `seed-logto` tool seeds the sample organization (workforce identity) into a Logto tenant.
 It is configured entirely by `LOGTO_*` (an `.env.example` ships in `platform/seed-logto/`):
 
 | Variable | Example | Meaning |
@@ -203,7 +201,7 @@ The smallest set that works in each mode — everything else has a working defau
 | **Control plane (governed egress)** | `AGENT_IDP_URL` (enables VP verification + egress proxy); add `OPA_URL` for the org veto; `AGENT_IDENTITY_MODE=vc` for production |
 | **Durable control plane** | `REGISTRY_BACKEND` + `REGISTRY_DB_URL` and `IDP_STORE_BACKEND` + `IDP_DB_URL` |
 | **Model broker** | `OPENAI_API_KEY` (held only here) + `CONTROL_PLANE_MGMT_URL` |
-| **Reference demo seeder (Logto)** | `LOGTO_BASE_URL`, `LOGTO_TENANT_ID`, `LOGTO_M2M_APP_ID`, `LOGTO_M2M_APP_SECRET`, `LOGTO_MGMT_API_RESOURCE`, `ALLOW_LOGTO_SEED=true` |
+| **Identity seeder (Logto)** | `LOGTO_BASE_URL`, `LOGTO_TENANT_ID`, `LOGTO_M2M_APP_ID`, `LOGTO_M2M_APP_SECRET`, `LOGTO_MGMT_API_RESOURCE`, `ALLOW_LOGTO_SEED=true` |
 
 ## Related
 

@@ -7,7 +7,7 @@ sidebar:
 
 :::caution[Status: planned integration — design preview]
 This integration is **not built yet**. Nothing on this page is installable today; it
-describes intended behavior so you can evaluate the fit. The generic building blocks it
+describes intended behavior so the fit can be evaluated. The generic building blocks it
 would compose — Envoy `ext_authz`, [network-layer egress enforcement](/docs/concepts/egress-enforcement/),
 and the `/authz` decision — ship today, but there is no kagent-specific controller,
 interceptor, or CRD support.
@@ -26,7 +26,7 @@ runs, or observes the agent.
 
 ## Intended integration flow
 
-The design follows the "keep your runtime, add accountable authorization" pattern:
+The design follows the "keep the existing runtime, add accountable authorization" pattern:
 
 1. kagent deploys the agent using its CRD, as it does today.
 2. A PaloNexus controller would register the agent and resolve its accountable human owner
@@ -58,10 +58,10 @@ As intended behavior, the difference from a generic "require approval" flag:
 Approver-authority verification is what distinguishes this from an approval gate: not
 "a human clicked approve," but "the human who approved was entitled to."
 
-## What you can use today
+## What is available today
 
 The kagent-specific pieces (controller, CRD registration, tool interceptor) are planned.
-If you run agents on Kubernetes today — kagent-deployed or otherwise — the shipped
+For agents running on Kubernetes today — kagent-deployed or otherwise — the shipped
 framework-agnostic enforcement already applies: pod egress can be confined so every
 outbound call traverses the governed proxy and `/authz`, with human-approval holds and the
 hash-chained audit trail. See [Credential-safe action enforcement](/docs/develop/egress-enforcement/) and

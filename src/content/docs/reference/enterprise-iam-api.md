@@ -5,13 +5,13 @@ sidebar:
   order: 3
 ---
 
-Use this page when you're integrating the workforce side of PaloNexus — syncing a directory,
+This page covers integrating the workforce side of PaloNexus — syncing a directory,
 resolving an employee from a login token, governing who owns an agent, exchanging a
-delegation for a short-lived token, or issuing/verifying a governance credential. It's the
+delegation for a short-lived token, or issuing/verifying a governance credential. It is the
 full request/response contract for the core enterprise identity-and-access-management (IAM)
 features (F1–F6) plus the
 compliance and provenance credential dimensions (F20, F24, F25) — the F-numbers are
-PaloNexus feature identifiers, reused in the section headings below — so you can drive directory,
+PaloNexus feature identifiers, reused in the section headings below — for driving directory,
 governance, Security Token Service (STS), and credential flows over HTTP.
 
 These features live in the **agent-idp** service, alongside the

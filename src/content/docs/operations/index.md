@@ -11,7 +11,7 @@ cryptographic agent identity are turned on, how agent egress is enforced at the
 network layer, how the cloud is provisioned (Terraform on DigitalOcean Kubernetes, DOKS),
 and how it is observed (the Grafana LGTM stack — Loki, Grafana, Tempo, Mimir).
 
-If you are *integrating* an agent rather than running the platform, start with
+For *integrating* an agent rather than running the platform, start with
 [Deploy an agent](/docs/develop/deploy-an-agent/) instead.
 
 ## One binary, three listeners
@@ -73,27 +73,27 @@ pick: evaluate on the left, run production on the right.
 |---|---|---|---|
 | **Enforcement fidelity** | in-process decision simulation | real control-plane `/authz` decision | real `/authz` **plus** Envoy request forwarding |
 | **Envoy `ext_authz` forwarding** | — | decision only (no L7 proxy) | ✅ `SecurityPolicy.extAuth` forwards on allow |
-| **OIDC workforce identity** | — | optional (set `OIDC_*`) | ✅ (any OIDC IdP — e.g. Dex, Logto, Okta, Entra ID) |
+| **OIDC workforce identity** | — | optional (set `OIDC_*`) | ✅ (Logto — the supported IdP; any standard OIDC issuer works) |
 | **OPA org veto** | — | inline policy only | ✅ `OPA_URL` deny-overrides bundle |
 | **Regulated egress / needs-approval (task-based access control, TBAC)** | simulated | ✅ real agent-idp delegation check | ✅ |
 | **Cryptographic agent identity (Verifiable Credential, VC, mode)** | — | header-trust (`AGENT_IDENTITY_MODE=header`) | ✅ `egress-identity-vc` (verifiable presentation, VP, required) |
 | **Network-enforced egress (proxy-only netpol)** | — | — | ✅ `egress-enforcement` + sidecar + admission |
 | **Durable Postgres state** | — | ✅ (one instance, two DBs) | ✅ CloudNativePG (HA) |
 | **High availability** | — | — | ✅ HA control plane + autoscale pool |
-| **Best for** | unit tests, the hero flow, CI | local evaluation, demos | staging / production |
+| **Best for** | unit tests, the end-to-end governed flow, CI | local evaluation, demos | staging / production |
 
 Compose and any Kubernetes cluster share **every env var** — only the orchestration
-and the opt-in hardening components differ, so what you prove locally holds in
+and the opt-in hardening components differ, so what is proven locally holds in
 production. The zero-to-authority-bound [runbook](/docs/operations/doks-runbook/) is
 **cluster-agnostic** (kind, EKS, GKE, on-prem, DOKS) — DOKS is just the worked
 example. Start with [Docker Compose](/docs/operations/docker-compose/) to evaluate,
-then graduate via the runbook against whichever cluster you run.
+then graduate via the runbook against the target cluster.
 
 ## Pages in this section
 
 1. [Control plane (Go)](/docs/operations/control-plane/) — architecture, ports, the full env-var reference, build/test, fail-closed invariants.
 2. [Self-hosting](/docs/operations/self-hosting/) — deploy with Kustomize: prereqs, overlays, opt-in components, secrets.
-3. [Bring your own IdP](/docs/operations/bring-your-own-idp/) — wire your own enterprise IdP (Logto first-supported / Okta / Entra / any OIDC) as human sign-in via the `oidc` component.
+3. [Bring your own IdP](/docs/operations/bring-your-own-idp/) — wire the enterprise IdP (Logto — the supported IdP; Okta / Entra / any OIDC via the same seam) as human sign-in via the `oidc` component.
 4. [Docker Compose](/docs/operations/docker-compose/) — the non-Kubernetes evaluation path: the full stack via `docker compose up`, with the allow/deny/needs-approval smoke test.
 5. [Persistence](/docs/operations/persistence/) — pluggable registry + agent-idp backends (memory/postgres/mysql/sqlite/mongodb), CloudNativePG.
 6. [Credential-safe action enforcement (ops)](/docs/operations/egress-enforcement-ops/) — the forward-proxy, proxy-only NetworkPolicies, the admission webhook, the Envoy egress gateway.

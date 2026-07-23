@@ -7,14 +7,14 @@ sidebar:
 
 :::note[Cluster-agnostic]
 These steps work on **any** Kubernetes — kind, EKS, GKE, on-prem, DigitalOcean Kubernetes (DOKS). DOKS is
-the worked example here; substitute your cluster's kubeconfig/context. PaloNexus
+the worked example here; substitute the target cluster's kubeconfig/context. PaloNexus
 does not depend on DigitalOcean.
 :::
 
 This is the **cold-start path**: from nothing to an *authority-bound* agent — one whose
 model, tool, and agent-to-agent egress is decided at the control plane's
 `/authz` — on **any Kubernetes (DOKS shown)**, in under 30 minutes. It stitches
-together the pieces that already have their own pages so you run them in the right
+together the pieces that already have their own pages so they run in the right
 order with the right prerequisites:
 
 - [Terraform / DOKS](/docs/operations/terraform-doks/) provisions the cluster, registry, and VPC.
@@ -24,14 +24,14 @@ order with the right prerequisites:
 
 :::tip[The 30-minute target]
 The clock assumes the **container images already exist** in a registry the
-cluster can pull (`ghcr.io/palonexus/*` or your DigitalOcean Container Registry, DOCR). Building+pushing ten
+cluster can pull (`ghcr.io/palonexus/*` or a DigitalOcean Container Registry, DOCR). Building+pushing ten
 multi-arch images from cold is *not* in the 30 minutes — see
 [What can blow the 30-minute budget](#what-can-blow-the-30-minute-budget).
 :::
 
 ## Prerequisites & env/secret matrix
 
-Have these before you start the clock:
+Have these ready before starting the clock:
 
 | Tool | Why |
 |---|---|
@@ -65,8 +65,8 @@ The portal `/settings/seed` button runs the `seed-logto` CLI via a Node
 portal image must bundle Python 3.11 + the `seed-logto` tool (the `Dockerfile`
 is already rewritten for this — `SEED_LOGTO_DIR=/opt/seed-logto`,
 `SEED_LOGTO_PYTHON=/opt/seedvenv/bin/python3`, `ALLOW_LOGTO_SEED=true`). A plain
-`node:*` portal image will `ENOENT` on the spawn. If you can't run the bundled
-image, seed from the CLI instead (Step 4, Option B). See the Ops deploy note at
+`node:*` portal image will `ENOENT` on the spawn. If the bundled image can't be
+run, seed from the CLI instead (Step 4, Option B). See the Ops deploy note at
 `docs/requirements/ops-portal-deploy-note.md`.
 :::
 
@@ -78,7 +78,7 @@ those images ship so the runbook stays one source of truth:
 | Env / secret | Where | Enables | Notes |
 |---|---|---|---|
 | `SIMULATE_OPERATOR_TOKEN` | control-plane (`palonexus`) | the `/authz` **dry-run** ("Live decision" policy simulator) | **Empty = disabled / fail-closed.** When set, every dry-run must carry a matching `X-Palonexus-Simulate-Operator` header. The portal `/simulate` backend-for-frontend (BFF) must hold the *same* token server-side. (REM-136 / REM-160) |
-| `SEED_LOGTO_DIR` (+ `nsr_seeder` on `PYTHONPATH`) | agent-idp (`agent-idp`) | the `POST /v1/authority/preview` ("Authority preview" mode) | agent-idp resolves the seed package + Northstar (the fictional demo org) manifests from `SEED_LOGTO_DIR` (default `<repo>/seed-logto`); **unavailable → 503, fail-closed**, never a guess. The portal image already mounts the seed tree at `/opt/seed-logto`. |
+| `SEED_LOGTO_DIR` (+ `nsr_seeder` on `PYTHONPATH`) | agent-idp (`agent-idp`) | the `POST /v1/authority/preview` ("Authority preview" mode) | agent-idp resolves the seed package + sample-organization manifests from `SEED_LOGTO_DIR` (default `<repo>/seed-logto`); **unavailable → 503, fail-closed**, never a guess. The portal image already mounts the seed tree at `/opt/seed-logto`. |
 | `logto-m2m` (above) + `ALLOW_LOGTO_SEED=true` | portal (`palonexus`) | portal seed-from-UI | already wired by `components/portal-seed-logto`. |
 | **TODO** API-keys / tenant env (`PALONEXUS_API_KEY`, `pn_live_…`/`pn_test_…`; tenant `org_id` defaults) | agent-idp `/v1/keys` (new) + portal `/settings/keys`, `/settings/tenant` | SDK key auth + tenant registration defaults | **Not yet final** — the keys+tenant wave (REM-161) is in flight; its storage/env (the new agent-idp keys endpoint backing store) is not landed. Treat this row as a placeholder and reconcile against REM-161's Linear callouts before the batched rollout. |
 
@@ -97,7 +97,7 @@ those images ship so the runbook stays one source of truth:
 
 The flow below is the same six steps as a dependency graph: nothing reconciles
 until the Gateway API + Envoy Gateway Custom Resource Definitions (CRDs) exist (Step 1 gates everything that
-follows), seeding gives the governed call real personas to decide against, and the
+follows), seeding gives the governed call real subjects to decide against, and the
 path ends at the three verdicts plus a verifiable audit row — the proof the spine
 is live.
 
@@ -106,7 +106,7 @@ flowchart TD
   s0[Step 0 - provision or connect DOKS] --> s1[Step 1 - Gateway API + Envoy Gateway CRDs - SecurityPolicy.extAuth]
   s1 --> s2[Step 2 - out-of-band Secrets]
   s2 --> s3[Step 3 - kubectl apply -k overlays/selfhost]
-  s3 --> s4[Step 4 - seed Northstar via portal /settings/seed or CLI]
+  s3 --> s4[Step 4 - seed the sample org via portal /settings/seed or CLI]
   s4 --> s5[Step 5 - deploy + register authority-bound agent - egress sidecar 2/2]
   s5 --> v{Step 6 - /authz verdict}
   v -->|in-allowlist| allow[allow 200 + audit row]
@@ -137,12 +137,12 @@ make registry-login     # doctl registry login → DOCR
 ```
 
 GKE and EKS have their own equivalent modules (`infra/terraform-gke/`,
-`infra/terraform-eks/`, same `make up`/`make down` shape) if you'd rather
-provision on one of those instead — see
+`infra/terraform-eks/`, same `make up`/`make down` shape) to provision on one
+of those instead — see
 [Terraform / DOKS](/docs/operations/terraform-doks/) for the DOKS-specific
 walkthrough this runbook uses as its worked example.
 
-`make up` writes the kubeconfig and merges it into your context. Confirm:
+`make up` writes the kubeconfig and merges it into the current context. Confirm:
 
 ```bash
 kubectl get nodes        # all Ready (3× s-2vcpu-4gb)
@@ -192,7 +192,7 @@ kubectl apply -f deploy/kustomize/base/model-broker/secret.yaml
 kubectl -n agent-idp create secret generic agent-idp-issuer \
   --from-literal=ISSUER_PRIVATE_KEY_B64="$(your-keygen)"
 
-# Logto M2M (only if you'll seed against a live tenant from the portal)
+# Logto M2M (only if seeding against a live tenant from the portal)
 kubectl -n palonexus create secret generic logto-m2m \
   --from-literal=LOGTO_BASE_URL=https://<tenant>.logto.app \
   --from-literal=LOGTO_TENANT_ID=<tenant-id> \
@@ -210,13 +210,13 @@ The `selfhost` overlay is the cluster-agnostic production overlay: it deploys th
 whole control layer, runs the egress decision in anonymous-passthrough (registry
 + policy + delegation still fully enforce), and wires the portal seed component.
 
-Point the images at your registry, then apply. The Open Policy Agent (OPA) Rego ConfigMap is
-generated from the repo-root `policy/rego/authz.rego`, so you must allow loading
+Point the images at the target registry, then apply. The Open Policy Agent (OPA) Rego ConfigMap is
+generated from the repo-root `policy/rego/authz.rego`, so the build must allow loading
 files outside the kustomization dir (`LoadRestrictionsNone`):
 
 ```bash
 cd deploy/kustomize/overlays/selfhost
-# Point each image at your registry (DOCR or ghcr); tag defaults to :dev
+# Point each image at the target registry (DOCR or ghcr); tag defaults to :dev
 kustomize edit set image \
   ghcr.io/palonexus/control-plane=<reg>/control-plane:<tag> \
   ghcr.io/palonexus/portal=<reg>/portal:<tag>            # …repeat per image
@@ -261,20 +261,20 @@ agent. Order matters; see [Self-hosting → opt-in components](/docs/operations/
 
 ## Step 4 — Seed the demo identity model
 
-:::note[Step 4 is OPTIONAL — reference demo (Logto)]
-Seeding the demo identity model is **Logto-specific to the reference demo** and is
-**not required** to stand up an authority-bound agent — the authority-bound-agent path itself needs
-no Logto. This step exists only to load the Northstar **demo** personas so the
+:::note[Step 4 is OPTIONAL — sample identity model]
+Seeding the sample identity model is **not required** to stand up an
+authority-bound agent — the authority-bound-agent path itself needs no seed data.
+This step exists only to load sample workforce identities so the
 allow/deny/needs-approval verdicts have realistic subjects to decide against. A
-**"bring-your-own IdP"** deployment skips this and connects its own OpenID Connect (OIDC) /
-SCIM (System for Cross-domain Identity Management)
-workforce identity provider (IdP) — Okta, Microsoft Entra ID, Auth0, Ping, Google Workspace, Amazon
-Cognito, Keycloak, Logto, … — instead; see
+production deployment skips this and connects the organization's workforce
+identity provider — Logto (the supported IdP) via OpenID Connect (OIDC) /
+SCIM (System for Cross-domain Identity Management), a seam any standard OIDC/SCIM
+provider fits — instead; see
 [IdP Support Model](/docs/concepts/enterprise-iam/#idp-support-model).
 :::
 
-Load the Northstar org (28 personas, 6 agent scenarios, `org:agents:*` authority,
-~64 task scopes) so the governed call has real personas and scopes to decide
+Load the sample organization (28 workforce identities, 6 agent scenarios, `org:agents:*` authority,
+~64 task scopes) so the governed call has real subjects and scopes to decide
 against.
 
 **Option A — from the portal (no CLI):** open `/settings/logto`, confirm the
@@ -284,9 +284,9 @@ requires the bundled portal image (Python 3.11 + `seed-logto` co-located).
 
 ![Seed-data console targeting the connected Logto tenant and palonexus-demo namespace, with an offline-mode toggle and Plan, Apply, Reseed and Cleanup action cards each describing what the seed-logto CLI step does](/docs/screenshots/settings-seed.png)
 
-*Reference demo: the `/settings/seed` console drives the `seed-logto` CLI against
-the demo's Logto tenant. Optional — only for loading the demo identity model.
-**Plan** previews the upserts, **Apply** loads the Northstar identity environment,
+*The `/settings/seed` console drives the `seed-logto` CLI against
+the connected Logto tenant. Optional — only for loading the sample identity model.
+**Plan** previews the upserts, **Apply** loads the sample identity environment,
 and **Reseed**/**Cleanup** reset it — the same actions as Option B's commands,
 streamed back as a live report. The offline toggle dry-runs the seeder without a
 live tenant.*
@@ -301,7 +301,7 @@ python3 seed_logto.py --no-dry-run apply     # apply against the connected tenan
 ```
 
 Use `--offline` on any subcommand to dry-run the seeder with the in-memory
-`FakeLogtoClient` (no live tenant) — useful to prove the path before real creds.
+`FakeLogtoClient` (no live tenant) — useful for testing the path before real creds.
 
 ## Step 5 — Deploy & register an authority-bound agent
 
@@ -334,10 +334,10 @@ kubectl -n apps rollout status deploy/<agent-name> --timeout=180s
 kubectl -n apps get pod -l app=<agent-name>     # 2/2 Ready (agent + egress sidecar)
 ```
 
-The four demo site-reliability-engineering (SRE) agents (`incident-triage`, `access-broker`, `diagnostics`,
+The four sample site-reliability-engineering (SRE) agents (`incident-triage`, `access-broker`, `diagnostics`,
 `remediation`) ship in the base and are a working reference — the
-`devops-incident` demo scenario (agent `northstar-devops-incident-agent`, owner Ethan Park,
-sponsor/approver Maya Chen — the demo-org personas) is the one this runbook verifies below.
+`devops-incident` sample scenario (agent `northstar-devops-incident-agent`, with a
+seeded owner and a seeded sponsor/approver) is the one this runbook verifies below.
 
 ## Step 6 — Verify a governed allow / deny / needs-approval
 
@@ -363,7 +363,7 @@ interrupts for human approval:
 1. The agent calls the regulated tool → `/authz` returns **needs-approval**; the
    middleware raises a LangGraph `interrupt()` and a delegation request appears in
    the portal **Authority Delegation** surface.
-2. The approver (e.g. Maya Chen, `org:agents:approve`) approves; the console resumes the
+2. An approver holding `org:agents:approve` approves; the console resumes the
    run via `Command(resume=...)`.
 3. The agent re-issues the call carrying the Delegation VC → **allowed (200)**.
 4. The whole run is reconstructable from the hash-chained audit
@@ -429,5 +429,3 @@ Be explicit about the real-cluster risks; none are in the happy-path timings:
 - [Secrets](/docs/operations/secrets/) — the never-in-image secret catalog and External Secrets Operator (ESO)/sealed-secrets.
 - [Credential-safe action enforcement (ops)](/docs/operations/egress-enforcement-ops/) — the proxy, proxy-only netpols, admission webhook.
 - The `deploy-langgraph-agent-to-palonexus` skill — the agent-deployment workflow Step 5 reuses.
-</content>
-</invoke>

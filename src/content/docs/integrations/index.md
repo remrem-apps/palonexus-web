@@ -1,13 +1,13 @@
 ---
 title: Integrations
-description: Keep your runtime, add accountable authorization — how PaloNexus plugs into agent frameworks, sandboxes, and protocols, with an honest available/planned status for each ecosystem.
+description: Keep the existing runtime, add accountable authorization — how PaloNexus plugs into agent frameworks, sandboxes, and protocols, with an honest available/planned status for each ecosystem.
 sidebar:
   order: 1
 ---
 
-Every PaloNexus integration follows one thesis: **keep your runtime, add accountable
-authorization.** You do not adopt a new agent framework, rewrite your agents, or move them
-into a PaloNexus-hosted environment. Your framework keeps the agent loop; your sandbox
+Every PaloNexus integration follows one thesis: **keep the existing runtime, add accountable
+authorization.** There is no new agent framework to adopt, no agent rewrite, and no move
+into a PaloNexus-hosted environment. The framework keeps the agent loop; the sandbox
 keeps the workspace; PaloNexus adds the missing layer — an accountable owner, a validated
 delegation, task-scoped short-lived access, and a verifiable authority trail — behind a
 single deny-by-default `/authz` decision.

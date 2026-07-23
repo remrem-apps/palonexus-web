@@ -82,7 +82,7 @@ pip install 'palonexus[all]'          # every extra at once
 The base package is the hybrid's *lean core*; each extra adds exactly one framework binding's
 dependency on top — nothing else:
 
-| `pip install …` | Adds the module | What it pulls in | When you need it |
+| `pip install …` | Adds the module | What it pulls in | When to install it |
 |---|---|---|---|
 | `palonexus` | `PaloNexus`, the [ten models](#the-ten-typed-models), the [error tree](#deny-by-default-as-typed-exceptions), `palonexus.crypto`, `palonexus.idp` | `httpx`, `pydantic`, `agentdid`, `idp-sdk` | Always — `task.check()` / `authorize()`, register, delegate, audit, revoke. |
 | `palonexus[langchain]` | `palonexus.langchain` | `langchain>=0.3` | Guard a `create_agent` tool with `middleware(pn)` + `guarded_tool`. |
@@ -107,9 +107,9 @@ pn = PaloNexus(control_plane_url="http://localhost:9191",
                idp_url="http://localhost:8090", api_key="pn_live_…")
 ```
 
-`PaloNexus.offline()` mirrors the demo seeder's `FakeLogtoClient` philosophy: the full
-register → deny → delegate → approve → succeed flow runs against an in-memory control plane
-seeded with the real personas from **devops-incident** (the demo scenario used throughout
+`PaloNexus.offline()` runs the full
+register → deny → delegate → approve → succeed flow against an in-memory control plane
+seeded with **devops-incident** (the sample scenario used throughout
 these docs), so unit tests and the doc snippets on this site need no cluster.
 
 ## The ten typed models
@@ -120,7 +120,7 @@ platform surface:
 | Model | Backed by |
 |---|---|
 | `AgentIdentity` | agent-idp `/v1/agents` + `/provision` (`did:key` + Membership VC) |
-| `HumanOwner` | the workforce directory (synced from your identity provider, IdP) via agent-idp `/v1/directory` (stable subject, `org:agents:*`) |
+| `HumanOwner` | the workforce directory (synced from the Logto identity provider, IdP) via agent-idp `/v1/directory` (stable subject, `org:agents:*`) |
 | `Delegation` | agent-idp `/v1/delegations` (`pending → approved → …`) |
 | `TaskSession` | the unit of governed work (bound by `pn.task(...)`) |
 | `PolicyDecision` | control-plane `/authz` (`allow`, `needs_approval`, `reason`, …) |
@@ -132,7 +132,7 @@ platform surface:
 
 ## Deny-by-default, as typed exceptions
 
-Deny is a *typed contract*, not a return code you might forget to check:
+Deny is a *typed contract*, not a return code that can silently go unchecked:
 
 | Exception | Means |
 |---|---|
@@ -148,7 +148,7 @@ Deny is a *typed contract*, not a return code you might forget to check:
 
 All three adapters make the **same** `/authz` decision through the **same** `pn._decide` seam
 and the same offline `FakeControlPlane`, so the deny / needs-approval / allow contract is
-identical across them. They differ only in *where* the gate sits in your agent:
+identical across them. They differ only in *where* the gate sits in the agent:
 
 | | [LangChain](/docs/sdk/langchain/) | [LangGraph](/docs/sdk/langgraph/) | [Deep Agents](/docs/sdk/deep-agents/) |
 |---|---|---|---|
@@ -160,9 +160,9 @@ identical across them. They differ only in *where* the gate sits in your agent:
 | Checkpointer required for HITL | yes (`thread_id`) | yes (`thread_id`) | yes (`thread_id`) |
 | Also ships | `gate_model=True` for the model edge | `resume_after_approval(pn)` explicit-resume node | the `palonexus-governance` SKILL.md |
 
-Not sure which layer you need? If your tools are already LangChain `@tool`s, start with the
-[LangChain adapter](/docs/sdk/langchain/); reach for [LangGraph](/docs/sdk/langgraph/) when you
-have an explicit graph, and [Deep Agents](/docs/sdk/deep-agents/) for planner/sub-agent runtimes.
+Not sure which layer fits? If the tools are already LangChain `@tool`s, start with the
+[LangChain adapter](/docs/sdk/langchain/); reach for [LangGraph](/docs/sdk/langgraph/) when there
+is an explicit graph, and [Deep Agents](/docs/sdk/deep-agents/) for planner/sub-agent runtimes.
 
 ## Where to go next
 

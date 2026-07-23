@@ -47,7 +47,7 @@ adversary cannot make the decision expensive by forcing denies.
 ## Per-stage latency — where the time goes
 
 The control plane emits `palonexus_authz_stage_duration_seconds{stage}` for the egress decision,
-so you can see *which* stage costs time directly in Grafana:
+so *which* stage costs time is visible directly in Grafana:
 
 | `stage` | Covers | Typical cost |
 |---|---|---|

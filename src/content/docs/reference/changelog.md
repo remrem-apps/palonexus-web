@@ -70,11 +70,10 @@ SDK `palonexus 0.1.0`. This is the consolidated set the rest of these docs descr
   governance-spine images (`control-plane` / `agent-idp` / `portal`) are kept on the same `:h<N>`
   line, so the current compatible spine is **`:h13`-class**.
 - **Agent runtime** stays on the independently-versioned `remediation :h12`-class line (carries the
-  async model-gate, issuer-key, and NetworkPolicy fixes from the autonomous-hero-flow wave).
+  async model-gate, issuer-key, and NetworkPolicy fixes from the autonomous end-to-end-flow wave).
 - **Docs program.** Added the [Security &amp; Trust](/docs/concepts/security-model/) overview, this
   changelog, the interactive **agent-idp API reference**, and a pass of diagrams, screenshots, and
-  comparison tables. Repositioned the docs as **IdP-neutral** — Logto is an optional reference demo
-  seed, not a requirement.
+  comparison tables.
 - **TypeScript SDK** `@palonexus/sdk` is **offline-validated** alongside the Python facade; live-sandbox
   validation and a Deep Agents TS adapter remain future work.
 
@@ -109,7 +108,7 @@ What shipped in this wave:
 - **Egress enforcement** stayed in force — forward proxy + NetworkPolicy + admission webhook, with
   `AGENT_IDENTITY_MODE=vc` (verified Membership VP mandatory) and sub-second revocation.
 - On-cluster smoke confirmed allow `200` / deny `403`, the dry-run `needs_approval` verdict, the
-  governed deny → approve → succeed hero flow, and `audit/verify ok:true`.
+  end-to-end governed flow (deny → approve → succeed), and `audit/verify ok:true`.
 
 ### SDK, adapters &amp; deployment — consolidation wave
 

@@ -6,7 +6,7 @@ sidebar:
 ---
 
 `palonexus.langchain` drops PaloNexus governance into a LangChain `create_agent` without
-restructuring your agent. You declare what a tool *means* (its action + resource) and the
+restructuring the agent. Declare what a tool *means* (its action + resource) and the
 middleware gates every call through `/authz`, **failing closed**:
 
 - **allow** → the tool runs;
@@ -59,8 +59,8 @@ agent = create_agent(model, tools=[guarded], middleware=[middleware(pn)])
 
 The decision is made against the **bound request context**, so run the agent inside a
 `pn.task(...)` block so the gate knows *who* the call is on behalf of. (The examples on this
-page use the docs' demo scenario: `devops-incident`, with `INC-4821` as the sample incident
-and personas from Northstar Corp, the fictional demo organization.)
+page use the docs' sample scenario: `devops-incident`, with a sample incident as the `task_id`
+and seeded personas from the sample organization.)
 
 <!-- no-doctest: illustrative fragment — uses `agent` from a neighbouring block (not standalone-runnable) -->
 ```python
@@ -69,13 +69,13 @@ with pn.task(subject="ethan.park@northstar.example", task_id="INC-4821",
     result = agent.invoke({"messages": [{"role": "user", "content": "read the db-failover runbook"}]})
 ```
 
-Tools you did *not* pass through `guarded_tool` are passed through ungoverned.
+Tools *not* declared via `guarded_tool` are passed through ungoverned.
 
 ## Run it offline (deny vs approved)
 
 This is the shipped `examples/langchain_runbook_guard.py`, runnable with no network. It uses
-the demo-org personas: Ethan Park (the agent's owner), Maya Chen (the approver), and Claire
-Evans (the unauthorized negative persona). A scripted model stands in for the LLM so the
+the seeded sample personas: the agent's owner, the approver, and an unauthorized
+negative persona. A scripted model stands in for the LLM so the
 example exercises the **governance gate**, not a real model. (`_fake_model.py` ships
 alongside the example.)
 
@@ -104,7 +104,7 @@ def last_tool_message(messages):
             return str(m.content)
     return ""
 
-# Deny path — Claire Evans (the negative persona) -> hard deny -> deny ToolMessage.
+# Deny path — the negative persona -> hard deny -> deny ToolMessage.
 pn = PaloNexus.offline()
 agent = create_agent(scripted_runbook_model(), tools=[guarded], middleware=[middleware(pn)])
 with pn.task(subject="claire.evans@northstar.example", task_id="INC-4821",
@@ -113,7 +113,7 @@ with pn.task(subject="claire.evans@northstar.example", task_id="INC-4821",
 print("[deny ]", last_tool_message(out["messages"]))
 pn.close()
 
-# Approved path — Ethan Park with a Maya-approved delegation -> allow -> tool runs.
+# Approved path — the owner with an approved delegation -> allow -> tool runs.
 pn = PaloNexus.offline()
 pn._fake.grant(subject="ethan.park@northstar.example", action="runbooks:read",
                resource=RESOURCE, scenario="devops-incident")   # offline stand-in for the human approval

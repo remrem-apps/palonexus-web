@@ -5,7 +5,7 @@ sidebar:
   order: 6
 ---
 
-This is one **optional** provisioning example (DigitalOcean). PaloNexus runs on any Kubernetes or via Docker Compose — you do not need DigitalOcean.
+This is one **optional** provisioning example (DigitalOcean). PaloNexus runs on any Kubernetes or via Docker Compose — DigitalOcean is not required.
 
 `infra/terraform-doks/` brings a budget **DOKS** (DigitalOcean Kubernetes) cluster up and down for the demo. It
 provisions only the cloud substrate — VPC, cluster, registry — and wires the
@@ -141,5 +141,5 @@ docker buildx build --platform linux/amd64 -t ghcr.io/palonexus/control-plane:de
 ```
 
 Then either keep the selfhost overlay's `ghcr.io/palonexus/*` image defaults or
-`kustomize edit set image …` per image. You can run `make down KEEP_REGISTRY=1`
+`kustomize edit set image …` per image. Run `make down KEEP_REGISTRY=1`
 to keep DOCR for the images that do fit, or skip DOCR entirely with `ghcr.io`.

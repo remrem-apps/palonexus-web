@@ -1,12 +1,12 @@
 ---
 title: Backups & restore
-description: What to back up in PaloNexus — the tamper-evident audit hash-chain above all, plus the registry, agent-idp store, and checkpointer DB — with a restore drill that re-verifies the chain so you can prove the backup is intact.
+description: What to back up in PaloNexus — the tamper-evident audit hash-chain above all, plus the registry, agent-idp store, and checkpointer DB — with a restore drill that re-verifies the chain to prove the backup is intact.
 sidebar:
   order: 10
 ---
 
 The thing that makes PaloNexus *trustworthy* — the **tamper-evident audit hash-chain** — is also
-the thing you most need to back up and be able to **prove intact**. This page covers what to back
+the thing that most needs to be backed up and **proven intact**. This page covers what to back
 up, how, and a restore drill that ends in a chain-verify.
 
 ## What to back up
@@ -14,10 +14,10 @@ up, how, and a restore drill that ends in a chain-verify.
 | Data | Where | Why it matters |
 |---|---|---|
 | **Audit hash-chain** | control-plane audit store (Loki for the shipped shipper; or the persisted audit log) | Tamper-evidence + the system of record for every decision. **Highest priority.** |
-| **Registry** | `REGISTRY_DB_URL` (Postgres/…) | Which services/agents exist and their `requireScope`/allowlist/budget. Re-creatable from your declarative source, but back it up to avoid a re-seed. |
+| **Registry** | `REGISTRY_DB_URL` (Postgres/…) | Which services/agents exist and their `requireScope`/allowlist/budget. Re-creatable from the declarative source, but back it up to avoid a re-seed. |
 | **agent-idp store** | `IDP_DB_URL` | Agent provisioning, delegations, **revocations / StatusList**. Losing revocation state could resurrect a revoked credential — back it up. |
 | **LangGraph checkpointer** | `PALONEXUS_AGENT_DB_URL` | In-flight human-in-the-loop (HITL) threads (paused approvals). Lose it and paused runs can't resume. |
-| **Issuer key** | `agent-idp` secret | Not "data" but **must** survive — without it every issued Verifiable Credential (VC) fails to verify. Handle via [Secrets](/docs/operations/secrets/), back up in your secret manager. |
+| **Issuer key** | `agent-idp` secret | Not "data" but **must** survive — without it every issued Verifiable Credential (VC) fails to verify. Handle via [Secrets](/docs/operations/secrets/), back up in the secret manager. |
 
 ## The audit chain is the crown jewel
 
@@ -36,7 +36,7 @@ python -c "from palonexus import PaloNexus; print(PaloNexus.from_env().audit.ver
 In the shipped stack the chain is hash-chained JSON on the control-plane stdout, tailed by the
 audit-shipper DaemonSet into **Loki** (`service.name=control-plane-audit`). Back up by either
 snapshotting Loki's storage, or by streaming the audit log to durable object storage (e.g.
-DigitalOcean Spaces) with retention. If you run a persisted audit store, back that up like any DB.
+DigitalOcean Spaces) with retention. A persisted audit store, if used, is backed up like any DB.
 
 ## Backing up the databases
 
@@ -57,9 +57,9 @@ spec:
 Repeat for the `agentidp-pg` cluster. For a SQLite (PVC) backend, snapshot the PVC or copy the
 `.db` file while the writer is quiesced. For MongoDB, `mongodump`.
 
-## Restore drill (do this before you need it)
+## Restore drill (run it before it is needed)
 
-A backup you've never restored is a hope, not a backup. The drill exports the
+A backup that has never been restored is a hope, not a backup. The drill exports the
 audit chain plus the Postgres stores, restores them into a scratch
 namespace/cluster, and gates on `verify_chain()` — a restored chain that still
 verifies proves the backup is complete and untampered, and a deliberately edited
@@ -92,7 +92,7 @@ Run this drill on a scratch namespace/cluster quarterly:
    archived audit log into Loki).
 3. **Re-point** `REGISTRY_DB_URL` / `IDP_DB_URL` / `PALONEXUS_AGENT_DB_URL` at the restored DBs and
    start the control plane + agent-idp.
-4. **Restore the issuer key** from your secret manager (so VCs still verify).
+4. **Restore the issuer key** from the secret manager (so VCs still verify).
 5. **Verify the chain** — the drill's pass/fail gate:
 
    ```bash
@@ -111,12 +111,12 @@ restore.
 
 ## Retention
 
-Audit is a compliance artifact — set retention to your regulatory window (Loki retention, or
+Audit is a compliance artifact — set retention to the applicable regulatory window (Loki retention, or
 object-storage lifecycle rules on the archived log). The registry/agent-idp DBs only need enough
-history for operational recovery; the audit chain is what you keep long-term.
+history for operational recovery; the audit chain is what is kept long-term.
 
 ## Related
 
-- [Migrations](/docs/operations/migrations/) — the schemas you're backing up.
+- [Migrations](/docs/operations/migrations/) — the schemas being backed up.
 - [Observability](/docs/operations/observability/) — where the audit chain is shipped (Loki).
 - [Upgrades](/docs/operations/upgrades/) — back up before every upgrade.

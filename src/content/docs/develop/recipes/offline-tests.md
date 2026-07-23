@@ -6,22 +6,22 @@ sidebar:
 ---
 
 The SDK ships a pytest plugin (`palonexus.pytest_plugin`, auto-registered via entry point) so
-your agent tests can assert the governance contract with **no cluster, no network, no API key**.
+agent test suites can assert the governance contract with **no cluster, no network, no API key**.
 Three fixtures cover the common cases:
 
 | Fixture | Yields |
 |---|---|
 | `fake_control_plane` | a fresh in-memory `FakeControlPlane` (deny-by-default) |
-| `offline_pn` | a `PaloNexus` bound to that fake — the canonical SDK fixture (closed for you) |
-| `devops_personas` | the `devops-incident` `ScenarioAuthority` — the Northstar demo scenario's owner/sponsor/approver/negative cast |
+| `offline_pn` | a `PaloNexus` bound to that fake — the canonical SDK fixture (closed automatically) |
+| `devops_personas` | the `devops-incident` `ScenarioAuthority` — the scenario's seeded owner/sponsor/approver/negative cast |
 
 No setup needed beyond `pip install palonexus` — the plugin registers itself.
 
 ## A deny-by-default test suite
 
-The personas come from the Northstar demo seed (the cast of the
+The personas come from the seed fixtures (the cast of the
 [temporary-elevation walkthrough](/docs/develop/guides/temporary-elevation-walkthrough/)) —
-Claire Evans is the `devops-incident` scenario's always-denied negative persona:
+the `devops-incident` scenario includes an always-denied negative persona:
 
 ```python
 # test_governance.py
@@ -39,7 +39,7 @@ def test_negative_persona_is_hard_denied(offline_pn, devops_personas):
                                scenario=sc.key).provision()
     with offline_pn.task(subject=sc.negative, task_id="INC-1", scenario=sc.key, actor=sc.agent) as t:
         d = t.check(action="runbooks:read", resource="runbooks-api:/runbooks/db-failover")
-        assert d.allow is False and d.needs_approval is False   # Claire Evans: hard deny
+        assert d.allow is False and d.needs_approval is False   # negative persona: hard deny
 
 def test_approve_then_revoke(offline_pn, fake_control_plane, devops_personas):
     sc = devops_personas
@@ -67,8 +67,8 @@ pytest test_governance.py -q
 - **Same semantics as production.** The fake is **deny-by-default** and fail-closed — anonymous
   denies, the negative persona hard-denies, missing delegation needs-approval, revocation flips
   back to deny — so a green offline suite reflects the real contract.
-- **Real personas.** Tests use the seeded Northstar personas, so they read as the actual demo
-  story and never drift into invented users.
+- **Seeded personas.** Tests use the shipped seed fixtures, so they exercise the same
+  identities every example in these docs uses and never drift into invented users.
 
 ## In CI (the doc-test gate)
 

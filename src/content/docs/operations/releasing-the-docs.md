@@ -19,7 +19,7 @@ the end-to-end documentation tests pass. There is no supported manual or laptop 
   docs deploy.
 - The pipeline lives in `.github/workflows/docs-ci-deploy.yml`.
 
-## Local validation (before you push)
+## Local validation (before pushing)
 
 ```sh
 npm ci

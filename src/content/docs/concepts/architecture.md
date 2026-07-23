@@ -33,7 +33,7 @@ Both paths call the same dependency packages in order:
 | `internal/audit` | append a hash-chained record of the outcome | — |
 | `internal/metrics` | bump the decision counter + latency histogram | — |
 
-Read `internal/authz/authz.go` first if you read nothing else — every other package
+Read `internal/authz/authz.go` first — every other package
 is a dependency of it.
 
 ### The request path, end to end
@@ -46,7 +46,7 @@ converge on the `:9191` decision listener, which runs the internal stages in ord
 (identity → registry → policy → audit → metrics) and only forwards to the upstream on an
 **allow** (the bold edge). The dashed edges are the two identity sources the decision
 consults but does not embed: **the enterprise identity provider (IdP, OIDC)** supplies human sign-in keys (JWKS)
-and the workforce directory (Logto in the demo), while **agent-idp** verifies each agent's
+and the workforce directory (Logto), while **agent-idp** verifies each agent's
 Verifiable Presentation.
 The `:8181` management API sits beside the hot path so operators and CI can read the
 registry, audit, and metrics without touching the decision listener.
@@ -69,7 +69,7 @@ flowchart LR
     mgmt[":8181 management API"]
   end
 
-  idp[("Enterprise IdP / Workforce IAM<br/>OIDC · SCIM<br/>Logto in demo")]
+  idp[("Enterprise IdP / Workforce IAM<br/>OIDC · SCIM<br/>Logto")]
   aidp[("agent-idp<br/>did:web issuer, VCs")]
   upstream([Upstream: service / model / tool / peer])
 
@@ -169,7 +169,7 @@ is gated.
 ## Consoles
 
 PaloNexus deliberately splits its UI into focused portals. **None is exposed to the
-public internet.** Each is reachable only over your **Tailscale tailnet** (the
+public internet.** Each is reachable only over the organization's **Tailscale tailnet** (the
 production path) or via `kubectl port-forward` (the local fallback). `make port-forward`
 opens all of them at once.
 
@@ -240,7 +240,7 @@ portal's **Traces** tab embeds the Tempo Explore view.
 ### Exposure model
 
 - **Tailscale** is the intended access path. The portal and incy ship Tailscale node
-  manifests; set `TS_AUTHKEY` (a Secret) to join them to your tailnet. If the auth key
+  manifests; set `TS_AUTHKEY` (a Secret) to join them to the tailnet. If the auth key
   is absent the deploy still succeeds — a failed/absent tailnet never blocks the
   platform.
 - **Port-forward** is the always-available local fallback (`make port-forward`):

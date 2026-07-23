@@ -5,10 +5,9 @@ sidebar:
   order: 4
 ---
 
-Use this page when you're constructing requests to `/authz` (or the egress proxy) and need
-to know exactly which `X-Palonexus-*` headers to send, which ones you'll get back, and when
-each is trusted. It's the definitive header contract for both the ingress and egress decision
-paths.
+This page is the definitive header contract for both the ingress and egress decision
+paths — exactly which `X-Palonexus-*` headers a request to `/authz` (or the egress proxy)
+sends, which ones come back, and when each is trusted.
 
 The `/authz` decision is shaped by — and produces — a small set of headers. Three
 acronyms recur in the tables below: a verifiable presentation (VP) is the agent's signed

@@ -97,7 +97,7 @@ export default defineConfig({
 							label: 'Walkthroughs',
 							items: [
 								{
-									label: 'Temporary elevation (INC-4821)',
+									label: 'Temporary elevation',
 									slug: 'develop/guides/temporary-elevation-walkthrough',
 								},
 							],

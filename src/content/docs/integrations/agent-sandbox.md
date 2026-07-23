@@ -7,7 +7,7 @@ sidebar:
 
 :::caution[Status: planned integration — design preview]
 This integration is **not built yet**. Nothing on this page is installable today; it
-describes intended behavior so you can evaluate the fit. The underlying enforcement
+describes intended behavior so the fit can be evaluated. The underlying enforcement
 pattern — confining a workload's egress so every outbound call traverses a governed,
 credential-injecting gateway — [ships today for Kubernetes pods](/docs/concepts/egress-enforcement/),
 but there is no Agent Sandbox-specific adapter, session mapping, or lifecycle binding.
@@ -53,7 +53,7 @@ revocation. Kubernetes RBAC and NetworkPolicies govern the *infrastructure*; Pal
 would govern the *organizational authority* the sandboxed agent exercises against systems
 beyond the cluster. The two compose rather than compete.
 
-## What you can use today
+## What is available today
 
 The Agent Sandbox-specific adapter is planned. The generic mechanism it would build on is
 shipped: Kubernetes pods can be confined so all egress traverses the governed proxy, with
