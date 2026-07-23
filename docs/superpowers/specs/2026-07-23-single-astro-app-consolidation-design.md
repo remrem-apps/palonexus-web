@@ -1,6 +1,6 @@
 # Single Astro App Consolidation Design
 
-**Status:** Approved direction; implementation pending
+**Status:** Implemented in a staged rollout; production route cutover pending
 **Date:** 2026-07-23
 
 ## Goal
@@ -18,8 +18,9 @@ collection into the docs `content.config.ts`. Keep the marketing homepage at
 The marketing components, layout, styles, and landing Markdown remain
 functionally unchanged except for import paths and shared asset references.
 The docs pages and Starlight integrations remain the source of truth for
-`/docs/*`. Remove the separate root Astro config and root dev/build scripts
-only after the unified app builds both route families.
+`/docs/*`. Keep the root-only config temporarily as a rollback build until the
+unified Worker has passed preview and production smoke tests; it is no longer
+the source of the marketing tree.
 
 ## Route and content boundaries
 
@@ -37,12 +38,15 @@ only after the unified app builds both route families.
 - Do not merge the marketing HTML layout into Starlight’s layout. The homepage
   keeps its marketing layout; Starlight keeps its own shell.
 - Keep `public/` assets available to both surfaces.
-- Remove duplicate root-only config only after `npm run build` emits both
-  `/index.html` and `/docs/**` successfully.
+- Keep the legacy root config and Worker route available until cutover is
+  explicitly verified and reversible.
 
 ## Verification
 
-Run the unified dev server and verify HTTP 200 for `/`, `/request-changes/`,
-`/docs/`, `/docs/getting-started/overview/`, and a representative deep docs
-page. Run the unified static build, inspect generated route files, and run the
-existing docs and root Playwright suites against the single server.
+Run `npm run dev` (the unified local Worker) and verify HTTP 200 for `/`,
+`/request-changes/`, `/docs/`, `/docs/getting-started/overview/`, and a
+representative deep docs page. Run `npm run stage:unified`, inspect generated
+route files, run the request-form redirect checks, and validate the candidate
+with `wrangler deploy --dry-run -c wrangler.unified.jsonc`. The existing docs
+and root Playwright suites remain rollback coverage until the production route
+cutover.
